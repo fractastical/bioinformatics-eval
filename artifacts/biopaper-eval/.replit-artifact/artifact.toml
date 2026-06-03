@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "BioEval — Bioinformatics Paper Evaluator"
+version = "1.0.0"
+id = "artifacts/biopaper-eval"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22624
+
+[services.development]
+run = "pnpm --filter @workspace/biopaper-eval run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/biopaper-eval", "run", "build" ]
+publicDir = "artifacts/biopaper-eval/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22624"
+BASE_PATH = "/"

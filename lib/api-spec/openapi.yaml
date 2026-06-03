@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BioEval — Bioinformatics Paper Evaluator API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: evaluations
+    description: Paper evaluation operations
+  - name: code-analysis
+    description: Simulation code analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,177 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /evaluations:
+    get:
+      operationId: listEvaluations
+      tags: [evaluations]
+      summary: List all evaluations
+      responses:
+        "200":
+          description: List of evaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluation"
+    post:
+      operationId: createEvaluation
+      tags: [evaluations]
+      summary: Submit a paper for evaluation (via URL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationInput"
+      responses:
+        "201":
+          description: Evaluation created and queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "400":
+          description: Bad request
+
+  /evaluations/{id}:
+    get:
+      operationId: getEvaluation
+      tags: [evaluations]
+      summary: Get a single evaluation with full results
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evaluation with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteEvaluation
+      tags: [evaluations]
+      summary: Delete an evaluation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /evaluations/{id}/rerun:
+    post:
+      operationId: rerunEvaluation
+      tags: [evaluations]
+      summary: Re-run AI analysis on an existing evaluation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evaluation updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+
+  /evaluations/{id}/code-analyses:
+    get:
+      operationId: listCodeAnalyses
+      tags: [code-analysis]
+      summary: List all code analyses for an evaluation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of code analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CodeAnalysis"
+    post:
+      operationId: createCodeAnalysis
+      tags: [code-analysis]
+      summary: Submit simulation code for analysis against a paper
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeAnalysisInput"
+      responses:
+        "201":
+          description: Code analysis created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeAnalysis"
+
+  /evaluations/{id}/code-analyses/{analysisId}:
+    get:
+      operationId: getCodeAnalysis
+      tags: [code-analysis]
+      summary: Get a specific code analysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Code analysis with segment breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeAnalysis"
+        "404":
+          description: Not found
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [evaluations]
+      summary: Get aggregate statistics across all evaluations
+      responses:
+        "200":
+          description: Aggregate stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +209,132 @@ components:
       required:
         - status
 
+    Evaluation:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        paperUrl:
+          type: ["string", "null"]
+        pdfFilename:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, analyzing, complete, error]
+        overallScore:
+          type: ["number", "null"]
+        dataSourceScore:
+          type: ["number", "null"]
+        datasetScore:
+          type: ["number", "null"]
+        reproducibilityScore:
+          type: ["number", "null"]
+        citationScore:
+          type: ["number", "null"]
+        summary:
+          type: ["string", "null"]
+        dataSourcesFound:
+          type: ["integer", "null"]
+        datasetsFound:
+          type: ["integer", "null"]
+        citationsFound:
+          type: ["integer", "null"]
+        findings:
+          type: ["string", "null"]
+        gaps:
+          type: ["string", "null"]
+        recommendations:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    EvaluationInput:
+      type: object
+      required:
+        - paperUrl
+      properties:
+        paperUrl:
+          type: string
+        title:
+          type: string
+
+    CodeAnalysis:
+      type: object
+      required:
+        - id
+        - evaluationId
+        - title
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+        evaluationId:
+          type: integer
+        title:
+          type: string
+        codeSnippet:
+          type: string
+        language:
+          type: string
+        status:
+          type: string
+          enum: [pending, analyzing, complete, error]
+        overallTraceability:
+          type: ["number", "null"]
+        summary:
+          type: ["string", "null"]
+        segments:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CodeAnalysisInput:
+      type: object
+      required:
+        - codeSnippet
+      properties:
+        title:
+          type: string
+        codeSnippet:
+          type: string
+        language:
+          type: string
+
+    EvaluationStats:
+      type: object
+      required:
+        - totalEvaluations
+        - averageOverallScore
+        - averageDataSourceScore
+        - statusBreakdown
+      properties:
+        totalEvaluations:
+          type: integer
+        averageOverallScore:
+          type: number
+        averageDataSourceScore:
+          type: number
+        averageDatasetScore:
+          type: number
+        averageCitationScore:
+          type: number
+        statusBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        recentEvaluations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evaluation"
