@@ -49,7 +49,6 @@ export const getHealthCheckUrl = () => {
 }
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
@@ -204,7 +203,7 @@ export const getCreateEvaluationUrl = () => {
 }
 
 /**
- * @summary Submit a paper for evaluation (via URL)
+ * @summary Submit a paper URL for evaluation
  */
 export const createEvaluation = async (evaluationInput: EvaluationInput, options?: RequestInit): Promise<Evaluation> => {
 
@@ -253,7 +252,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateEvaluationMutationError = ErrorType<void>
 
     /**
- * @summary Submit a paper for evaluation (via URL)
+ * @summary Submit a paper URL for evaluation
  */
 export const useCreateEvaluation = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvaluation>>, TError,{data: BodyType<EvaluationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

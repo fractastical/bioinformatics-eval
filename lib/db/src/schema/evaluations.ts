@@ -9,11 +9,22 @@ export const evaluationsTable = pgTable("evaluations", {
   pdfFilename: text("pdf_filename"),
   extractedText: text("extracted_text"),
   status: text("status").notNull().default("pending"), // pending | analyzing | complete | error
+
+  // 6-dimension rubric scores (0-100 normalized)
   overallScore: real("overall_score"),
+  // Dim 1: Data Disclosure (20 pts rubric → 0-100)
   dataSourceScore: real("data_source_score"),
+  // Dim 2: Dataset Resolvability (15 pts rubric → 0-100)
   datasetScore: real("dataset_score"),
+  // Dim 3: Code Availability & Versioning (15 pts rubric → 0-100)
   reproducibilityScore: real("reproducibility_score"),
+  // Dim 4: Code-to-Data Traceability (20 pts rubric → 0-100)
   citationScore: real("citation_score"),
+  // Dim 5: Simulation Derivation Clarity (20 pts rubric → 0-100)
+  simulationClarityScore: real("simulation_clarity_score"),
+  // Dim 6: Reproducibility Package Quality (10 pts rubric → 0-100)
+  reproPackageScore: real("repro_package_score"),
+
   summary: text("summary"),
   dataSourcesFound: integer("data_sources_found"),
   datasetsFound: integer("datasets_found"),
@@ -21,6 +32,12 @@ export const evaluationsTable = pgTable("evaluations", {
   findings: text("findings"),
   gaps: text("gaps"),
   recommendations: text("recommendations"),
+
+  // Structured evidence from multi-agent pipeline
+  accessions: text("accessions"),       // JSON: ResolvedAccession[]
+  evidenceItems: text("evidence_items"), // JSON: EvidenceItem[]
+  codeRepoUrl: text("code_repo_url"),   // Detected code repository URL
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

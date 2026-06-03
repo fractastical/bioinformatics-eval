@@ -19,7 +19,7 @@ export default function Evaluations() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-6" data-testid="evaluations-page">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Evaluations Directory</h1>
@@ -37,22 +37,26 @@ export default function Evaluations() {
                 className="pl-9 bg-background"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                data-testid="search-input"
               />
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Filter className="w-4 h-4" />
-              <span>{filtered?.length || 0} results</span>
+              <span data-testid="results-count">{filtered?.length || 0} results</span>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <Table data-testid="evaluations-table">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[400px]">Paper</TableHead>
+                <TableHead className="w-[300px]">Paper</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Overall Score</TableHead>
-                <TableHead>Data Score</TableHead>
+                <TableHead>Overall</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Dataset</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Trace</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
@@ -62,61 +66,88 @@ export default function Evaluations() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-8 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-6 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filtered?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                     No evaluations found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered?.map(evaluation => (
-                  <TableRow key={evaluation.id} className="group cursor-pointer">
-                    <TableCell className="font-medium">
-                      <Link href={`/evaluations/${evaluation.id}`} className="block">
-                        <div className="line-clamp-1">{evaluation.title || "Untitled"}</div>
-                        <div className="text-xs text-muted-foreground font-mono truncate mt-1">
-                          {evaluation.paperUrl || evaluation.pdfFilename || "Local file"}
+                filtered?.map(evaluation => {
+                  const getScoreClass = (s: number | null | undefined) => {
+                    if (s == null) return "text-muted-foreground";
+                    if (s > 70) return "text-green-600 dark:text-green-400 font-medium";
+                    if (s > 40) return "text-amber-500 font-medium";
+                    return "text-red-500 font-medium";
+                  };
+
+                  return (
+                    <TableRow key={evaluation.id} className="group cursor-pointer">
+                      <TableCell className="font-medium">
+                        <Link href={`/evaluations/${evaluation.id}`} className="block">
+                          <div className="line-clamp-2 text-sm">{evaluation.title || "Untitled"}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono truncate mt-1">
+                            {evaluation.paperUrl || evaluation.pdfFilename || "Local file"}
+                          </div>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={evaluation.status === 'complete' ? 'default' : evaluation.status === 'error' ? 'destructive' : 'secondary'} className="capitalize text-[10px] px-1.5 py-0">
+                          {evaluation.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`text-sm ${getScoreClass(evaluation.overallScore)}`}>
+                          {evaluation.overallScore ?? '-'}
                         </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={evaluation.status === 'complete' ? 'default' : evaluation.status === 'error' ? 'destructive' : 'secondary'} className="capitalize">
-                        {evaluation.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {evaluation.overallScore !== null && evaluation.overallScore !== undefined ? (
-                        <div className={`font-semibold ${evaluation.overallScore > 70 ? 'text-green-600 dark:text-green-400' : evaluation.overallScore > 40 ? 'text-amber-500' : 'text-red-500'}`}>
-                          {evaluation.overallScore}
+                      </TableCell>
+                      <TableCell>
+                        <div className={`text-xs ${getScoreClass(evaluation.dataSourceScore)}`}>
+                          {evaluation.dataSourceScore ?? '-'}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {evaluation.dataSourceScore !== null && evaluation.dataSourceScore !== undefined ? (
-                        <span className="text-muted-foreground">{evaluation.dataSourceScore}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(evaluation.createdAt), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/evaluations/${evaluation.id}`}>
-                        <ChevronRight className="w-5 h-5 inline-block text-muted-foreground group-hover:text-primary transition-colors" />
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell>
+                        {/* @ts-ignore */}
+                        <div className={`text-xs ${getScoreClass(evaluation.datasetScore)}`}>
+                          {/* @ts-ignore */}
+                          {evaluation.datasetScore ?? '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {/* @ts-ignore */}
+                        <div className={`text-xs ${getScoreClass(evaluation.reproducibilityScore)}`}>
+                          {/* @ts-ignore */}
+                          {evaluation.reproducibilityScore ?? '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {/* @ts-ignore */}
+                        <div className={`text-xs ${getScoreClass(evaluation.citationScore)}`}>
+                          {/* @ts-ignore */}
+                          {evaluation.citationScore ?? '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {format(new Date(evaluation.createdAt), "MMM d, yy")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/evaluations/${evaluation.id}`}>
+                          <ChevronRight className="w-4 h-4 inline-block text-muted-foreground group-hover:text-primary transition-colors" />
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -20,6 +20,8 @@ export interface CodeAnalysis {
   summary?: string | null;
   /** @nullable */
   segments?: string | null;
+  /** @nullable */
+  traceabilityMatrix?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

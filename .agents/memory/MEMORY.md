@@ -1,0 +1,1 @@
+- [React Query refetchInterval typing](react-query-refetch-interval.md) — UseQueryOptions requires queryKey; use `as any` cast to pass dynamic refetchInterval callback to Orval-generated hooks

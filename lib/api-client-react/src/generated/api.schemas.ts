@@ -38,6 +38,10 @@ export interface Evaluation {
   /** @nullable */
   citationScore?: number | null;
   /** @nullable */
+  simulationClarityScore?: number | null;
+  /** @nullable */
+  reproPackageScore?: number | null;
+  /** @nullable */
   summary?: string | null;
   /** @nullable */
   dataSourcesFound?: number | null;
@@ -51,6 +55,12 @@ export interface Evaluation {
   gaps?: string | null;
   /** @nullable */
   recommendations?: string | null;
+  /** @nullable */
+  accessions?: string | null;
+  /** @nullable */
+  evidenceItems?: string | null;
+  /** @nullable */
+  codeRepoUrl?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -83,6 +93,8 @@ export interface CodeAnalysis {
   summary?: string | null;
   /** @nullable */
   segments?: string | null;
+  /** @nullable */
+  traceabilityMatrix?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

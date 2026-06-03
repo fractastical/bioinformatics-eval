@@ -12,7 +12,11 @@ export const codeAnalysesTable = pgTable("code_analyses", {
   status: text("status").notNull().default("pending"), // pending | analyzing | complete | error
   overallTraceability: real("overall_traceability"),
   summary: text("summary"),
-  segments: text("segments"), // JSON array of {label, code, dataSource, citation, confidence}
+  // JSON: CodeSegment[] — each segment has label, code, dataSource, citation,
+  // confidence (high|medium|low), paramSource (9-class taxonomy), issues[]
+  segments: text("segments"),
+  // JSON: TraceabilityRow[] — the structured traceability matrix
+  traceabilityMatrix: text("traceability_matrix"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

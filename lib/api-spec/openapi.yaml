@@ -20,7 +20,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -46,7 +45,7 @@ paths:
     post:
       operationId: createEvaluation
       tags: [evaluations]
-      summary: Submit a paper for evaluation (via URL)
+      summary: Submit a paper URL for evaluation
       requestBody:
         required: true
         content:
@@ -230,13 +229,23 @@ components:
           enum: [pending, analyzing, complete, error]
         overallScore:
           type: ["number", "null"]
+        # Dim 1: Data Disclosure (20pt rubric)
         dataSourceScore:
           type: ["number", "null"]
+        # Dim 2: Dataset Resolvability (15pt rubric)
         datasetScore:
           type: ["number", "null"]
+        # Dim 3: Code Availability & Versioning (15pt rubric)
         reproducibilityScore:
           type: ["number", "null"]
+        # Dim 4: Code-to-Data Traceability (20pt rubric)
         citationScore:
+          type: ["number", "null"]
+        # Dim 5: Simulation Derivation Clarity (20pt rubric)
+        simulationClarityScore:
+          type: ["number", "null"]
+        # Dim 6: Reproducibility Package Quality (10pt rubric)
+        reproPackageScore:
           type: ["number", "null"]
         summary:
           type: ["string", "null"]
@@ -251,6 +260,14 @@ components:
         gaps:
           type: ["string", "null"]
         recommendations:
+          type: ["string", "null"]
+        # JSON string: ResolvedAccession[]
+        accessions:
+          type: ["string", "null"]
+        # JSON string: EvidenceItem[]
+        evidenceItems:
+          type: ["string", "null"]
+        codeRepoUrl:
           type: ["string", "null"]
         createdAt:
           type: string
@@ -293,7 +310,11 @@ components:
           type: ["number", "null"]
         summary:
           type: ["string", "null"]
+        # JSON string: CodeSegment[] with paramSource classification
         segments:
+          type: ["string", "null"]
+        # JSON string: TraceabilityRow[]
+        traceabilityMatrix:
           type: ["string", "null"]
         createdAt:
           type: string

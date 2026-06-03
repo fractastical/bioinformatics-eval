@@ -9,7 +9,6 @@ import * as zod from 'zod';
 
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -31,6 +30,8 @@ export const ListEvaluationsResponseItem = zod.object({
   "datasetScore": zod.number().nullish(),
   "reproducibilityScore": zod.number().nullish(),
   "citationScore": zod.number().nullish(),
+  "simulationClarityScore": zod.number().nullish(),
+  "reproPackageScore": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -38,6 +39,9 @@ export const ListEvaluationsResponseItem = zod.object({
   "findings": zod.string().nullish(),
   "gaps": zod.string().nullish(),
   "recommendations": zod.string().nullish(),
+  "accessions": zod.string().nullish(),
+  "evidenceItems": zod.string().nullish(),
+  "codeRepoUrl": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -45,7 +49,7 @@ export const ListEvaluationsResponse = zod.array(ListEvaluationsResponseItem)
 
 
 /**
- * @summary Submit a paper for evaluation (via URL)
+ * @summary Submit a paper URL for evaluation
  */
 export const CreateEvaluationBody = zod.object({
   "paperUrl": zod.string(),
@@ -71,6 +75,8 @@ export const GetEvaluationResponse = zod.object({
   "datasetScore": zod.number().nullish(),
   "reproducibilityScore": zod.number().nullish(),
   "citationScore": zod.number().nullish(),
+  "simulationClarityScore": zod.number().nullish(),
+  "reproPackageScore": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -78,6 +84,9 @@ export const GetEvaluationResponse = zod.object({
   "findings": zod.string().nullish(),
   "gaps": zod.string().nullish(),
   "recommendations": zod.string().nullish(),
+  "accessions": zod.string().nullish(),
+  "evidenceItems": zod.string().nullish(),
+  "codeRepoUrl": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -109,6 +118,8 @@ export const RerunEvaluationResponse = zod.object({
   "datasetScore": zod.number().nullish(),
   "reproducibilityScore": zod.number().nullish(),
   "citationScore": zod.number().nullish(),
+  "simulationClarityScore": zod.number().nullish(),
+  "reproPackageScore": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -116,6 +127,9 @@ export const RerunEvaluationResponse = zod.object({
   "findings": zod.string().nullish(),
   "gaps": zod.string().nullish(),
   "recommendations": zod.string().nullish(),
+  "accessions": zod.string().nullish(),
+  "evidenceItems": zod.string().nullish(),
+  "codeRepoUrl": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -138,6 +152,7 @@ export const ListCodeAnalysesResponseItem = zod.object({
   "overallTraceability": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "segments": zod.string().nullish(),
+  "traceabilityMatrix": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -176,6 +191,7 @@ export const GetCodeAnalysisResponse = zod.object({
   "overallTraceability": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "segments": zod.string().nullish(),
+  "traceabilityMatrix": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -202,6 +218,8 @@ export const GetStatsResponse = zod.object({
   "datasetScore": zod.number().nullish(),
   "reproducibilityScore": zod.number().nullish(),
   "citationScore": zod.number().nullish(),
+  "simulationClarityScore": zod.number().nullish(),
+  "reproPackageScore": zod.number().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -209,6 +227,9 @@ export const GetStatsResponse = zod.object({
   "findings": zod.string().nullish(),
   "gaps": zod.string().nullish(),
   "recommendations": zod.string().nullish(),
+  "accessions": zod.string().nullish(),
+  "evidenceItems": zod.string().nullish(),
+  "codeRepoUrl": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })).optional()
