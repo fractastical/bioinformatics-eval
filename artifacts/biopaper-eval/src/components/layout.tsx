@@ -9,6 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", icon: Activity, label: "Submit Evaluation" },
     { href: "/evaluations", icon: FileText, label: "All Evaluations" },
+    { href: "/dashboard", icon: LayoutDashboard, label: "Scores Dashboard" },
   ];
 
   return (

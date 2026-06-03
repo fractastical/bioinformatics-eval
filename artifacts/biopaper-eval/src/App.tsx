@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Evaluations from "@/pages/evaluations";
 import EvaluationDetail from "@/pages/evaluation-detail";
 import CodeAnalysisDetail from "@/pages/code-analysis";
+import Dashboard from "@/pages/dashboard";
 import Layout from "@/components/layout";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ function Router() {
         <Route path="/evaluations" component={Evaluations} />
         <Route path="/evaluations/:id" component={EvaluationDetail} />
         <Route path="/evaluations/:id/code/:analysisId" component={CodeAnalysisDetail} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
