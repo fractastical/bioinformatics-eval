@@ -41,32 +41,44 @@ Each paper is evaluated on six weighted dimensions (0–100):
 
 ---
 
-## Bee & Ant Simulation Series
+## Insect Simulation Series
 
-A focused evaluation of eight publicly available bee and ant colony simulations, scored June 2026. Full per-paper PDF reports available on request.
+A focused evaluation of fourteen publicly available insect colony and swarm simulations — bees, ants, termites, and fireflies — scored June 2026. Full per-paper PDF reports available on request.
 
 ### Rankings
 
-| Rank | Score | Repo | Language | Stars |
-|---|---|---|---|---|
-| 1 | **51.8** | [fractastical/bee-swarm-sim](https://github.com/fractastical/bee-swarm-sim) | HTML/JS | — |
-| 2 | **46.1** | [docxology/BeeStack](https://github.com/docxology/BeeStack) | Python | — |
-| 3 | **36.1** | [bones-ai/rust-ants-colony-simulation](https://github.com/bones-ai/rust-ants-colony-simulation) | Rust | ★208 |
-| 4 | **35.3** | [fractastical/antstack](https://zenodo.org/records/16782757) | Python | — |
-| 5 | **28.1** | [piXelicidio/locas-ants](https://github.com/piXelicidio/locas-ants) | Lua/Love2D | ★161 |
-| 6 | **25.3** | [MeoMix/symbiants](https://github.com/MeoMix/symbiants) | Rust | ★235 |
-| 7 | **23.1** | [tulustul/ants-sandbox](https://github.com/tulustul/ants-sandbox) | TypeScript | ★106 |
-| 8 | **20.1** | [darwiiiish/swarm-abc](https://github.com/darwiiiish/swarm-abc) | HTML/JS | — |
+| Rank | Score | Repo | Type | Language | Stars |
+|---|---|---|---|---|---|
+| 1 | **51.8** | [fractastical/bee-swarm-sim](https://github.com/fractastical/bee-swarm-sim) | 🐝 Bee | HTML/JS | — |
+| 1 | **51.8** | [lrdcxdes/ant-simulation](https://github.com/lrdcxdes/ant-simulation) | 🐜 Ant | Python | — |
+| 3 | **46.1** | [docxology/BeeStack](https://github.com/docxology/BeeStack) | 🐝 Bee | Python | — |
+| 4 | **36.1** | [bones-ai/rust-ants-colony-simulation](https://github.com/bones-ai/rust-ants-colony-simulation) | 🐜 Ant | Rust | ★208 |
+| 5 | **35.3** | [fractastical/antstack](https://zenodo.org/records/16782757) | 🐜 Ant | Python | — |
+| 6 | **34.3** | [cfrBernard/ant-colony-optimization](https://github.com/cfrBernard/ant-colony-optimization) | 🐜 Ant | JS/React | ★34 |
+| 7 | **33.3** | [Dougarasu/termite-multiagent-system](https://github.com/Dougarasu/termite-multiagent-system) | 🪳 Termite | C#/Unity | — |
+| 8 | **29.1** | [Haghrah/ACO---Robot-Path-Planning](https://github.com/Haghrah/ACO---Robot-Path-Planning) | 🐜 Ant | Python | ★61 |
+| 9 | **28.6** | [matheuslosilva/Hardware-Accelerated-Ant-Colony...](https://github.com/matheuslosilva/Hardware-Accelerated-Ant-Colony-Based-Swarm-System) | 🐜 Ant | C++/CUDA | ★12 |
+| 10 | **28.1** | [piXelicidio/locas-ants](https://github.com/piXelicidio/locas-ants) | 🐜 Ant | Lua/Love2D | ★161 |
+| 10 | **28.1** | [lax4mike/firefly](https://github.com/lax4mike/firefly) | 🔆 Firefly | JS | — |
+| 12 | **25.3** | [MeoMix/symbiants](https://github.com/MeoMix/symbiants) | 🐜 Ant | Rust | ★235 |
+| 13 | **23.1** | [tulustul/ants-sandbox](https://github.com/tulustul/ants-sandbox) | 🐜 Ant | TypeScript | ★106 |
+| 14 | **20.1** | [darwiiiish/swarm-abc](https://github.com/darwiiiish/swarm-abc) | 🐝 Bee | HTML/JS | — |
 
 ### Dimension Breakdown
 
 | Repo | Data Disclosure | Dataset Resolvability | Code Availability | Traceability | Sim Clarity | Repro Pkg | **Overall** |
 |---|---|---|---|---|---|---|---|
 | bee-swarm-sim | 25 | 0 | 67 | 50 | 50 | 70 | **51.8** |
+| ant-simulation (pygame) | 50 | 0 | 67 | 100 | 50 | 70 | **51.8** |
 | BeeStack | 25 | 0 | 100 | 25 | 50 | 70 | **46.1** |
 | rust-ants-colony | 0 | 0 | 67 | 100 | 25 | 40 | **36.1** |
 | antstack | 25 | 0 | 67 | 25 | 25 | 40 | **35.3** |
+| ant-colony-optimization | 25 | 33 | 67 | 50 | 25 | 40 | **34.3** |
+| termite-multiagent | 0 | 0 | 67 | 25 | 50 | 40 | **33.3** |
+| ACO-robot-path-planning | 0 | 0 | 67 | 25 | 25 | 40 | **29.1** |
+| hw-accel-ant-colony | 0 | 0 | 67 | 25 | 25 | 40 | **28.6** |
 | locas-ants | 0 | 0 | 67 | 0 | 25 | 40 | **28.1** |
+| firefly | 0 | 0 | 67 | 25 | 25 | 40 | **28.1** |
 | symbiants | 0 | 0 | 67 | 25 | 25 | 40 | **25.3** |
 | ants-sandbox | 0 | 0 | 67 | 0 | 25 | 40 | **23.1** |
 | swarm-abc | 0 | 0 | 67 | 25 | 25 | 40 | **20.1** |
@@ -80,6 +92,13 @@ A focused evaluation of eight publicly available bee and ant colony simulations,
 - ❌ No deposited dataset or accession numbers; stochastic — no seed control
 - ❌ No Zenodo DOI; only 4 commits with no tagged release
 
+**🐜 [ant-simulation (pygame)](https://github.com/lrdcxdes/ant-simulation)** — 51.8/100
+> Pygame stigmergy ant colony with emergent intelligence from simple pheromone rules. MIT license, requirements.txt with the three core dependencies (Pygame, NumPy, SciPy).
+- ✅ Highest Traceability (100) and Data Disclosure (50) of the series
+- ✅ Explicit dependency manifest (requirements.txt)
+- ❌ No pinned dependency versions (pygame==, numpy==, scipy==)
+- ❌ No release tag, commit hash, or Zenodo archive
+
 **🐝 [BeeStack](https://zenodo.org/records/20420557)** — 46.1/100
 > Whole-colony honeybee simulation scaffold. Code archived on Zenodo with MD5 checksums, tagged v1.0.0, MIT license, 676 passing tests.
 - ✅ Zenodo DOI + SHA checksums; versioned release
@@ -89,7 +108,7 @@ A focused evaluation of eight publicly available bee and ant colony simulations,
 
 **🐜 [rust-ants-colony-simulation](https://github.com/bones-ai/rust-ants-colony-simulation)** — 36.1/100  ★208
 > Ant colony simulation in Rust (Bevy engine). Clear repo structure; `cargo run --release` startup; KD-tree and query caching documented.
-- ✅ Highest Traceability score (100) — algorithmic choices explicitly documented
+- ✅ Traceability score 100 — algorithmic choices explicitly documented
 - ✅ `cargo run --release` one-liner launch
 - ❌ No versioned release or pinned commit; no Zenodo archive
 - ❌ No simulation parameters table; no random seed control
@@ -100,11 +119,41 @@ A focused evaluation of eight publicly available bee and ant colony simulations,
 - ❌ No resolvable dataset identifiers; GitHub URL absent from paper
 - ❌ Heuristic constants undocumented
 
+**🐜 [ant-colony-optimization](https://github.com/cfrBernard/ant-colony-optimization)** — 34.3/100  ★34
+> React + HTML5 canvas ACO visualizer. MIT license; sprite/tileset/map assets bundled in-repo. Only series entry with non-zero Dataset Resolvability (bundled map JSON).
+- ✅ Visual + map assets versioned in-repo (sprite sheet, tileset, AntMap.json)
+- ❌ Only 14 commits, no tagged release or DOI
+- ❌ Install instructions reference a placeholder repo URL that doesn't match
+
+**🪳 [termite-multiagent-system](https://github.com/Dougarasu/termite-multiagent-system)** — 33.3/100
+> Unity/C# 3D termite colony. Agent behavior reduced to two IF-THEN rules, clearly documented in README. MIT license.
+- ✅ Behavioral rules and environment structure documented
+- ❌ No datasets or accession numbers of any kind
+- ❌ No versioned release or Zenodo deposit
+
+**🐜 [ACO-robot-path-planning](https://github.com/Haghrah/ACO---Robot-Path-Planning)** — 29.1/100  ★61
+> Python ACO for robot path planning, explicitly tied to a published reference (Liu et al., 2017, Soft Computing). GPL-3.0.
+- ✅ Linked to a specific peer-reviewed paper
+- ❌ No data availability statement
+- ❌ No dataset accession numbers or external links
+
+**🐜 [hw-accel-ant-colony](https://github.com/matheuslosilva/Hardware-Accelerated-Ant-Colony-Based-Swarm-System)** — 28.6/100  ★12
+> C++/CUDA/OpenGL hardware-accelerated ant colony swarm. 38 commits, clear structure.
+- ✅ GPU-accelerated implementation (CUDA + OpenGL)
+- ❌ No benchmark scenarios or test case files
+- ❌ No documented results, metrics, figures, or tables
+
 **🐜 [locas-ants](https://github.com/piXelicidio/locas-ants)** — 28.1/100  ★161
 > Lua/Love2D ant colony remake. 6 versioned releases; pre-built `.love` binary available; MIT license.
 - ✅ 6 versioned releases; binary download available
 - ❌ No parameter documentation; pheromone decay rates and ant rules undocumented
 - ❌ No biological citations or dataset references
+
+**🔆 [firefly](https://github.com/lax4mike/firefly)** — 28.1/100
+> JavaScript firefly synchronization simulation. Live demo at mikelambert.me/firefly.
+- ✅ Live deployed demo for interactive inspection
+- ❌ No README documenting parameters, initialization, or seeds
+- ❌ No data availability statement
 
 **🐜 [symbiants](https://github.com/MeoMix/symbiants)** — 25.3/100  ★235
 > Rust/Bevy ant colony simulation game. Dual Apache-2.0/MIT license; devcontainer setup; native + WASM builds.
@@ -126,10 +175,11 @@ A focused evaluation of eight publicly available bee and ant colony simulations,
 
 ### Cross-Series Observations
 
-- **Popularity ≠ reproducibility.** The two most-starred repos (symbiants ★235, locas-ants ★161) rank 6th and 5th. The highest-scoring sim (bee-swarm-sim) has fewer stars than any of them.
-- **Code Availability converges at 67 for all non-archived repos.** The single dimension separating most repos is Traceability — whether algorithmic choices map back to cited sources.
-- **Dataset Resolvability is 0 across the board.** None of the eight sims deposit output data with accession numbers. This is the clearest shared gap.
-- **The fastest path to a higher score** is: (1) archive to Zenodo for a DOI, (2) add a parameters table mapping constants to cited sources, (3) add a deterministic seed, (4) deposit one example output file.
+- **Popularity ≠ reproducibility.** The most-starred repo (symbiants ★235) ranks 12th of 14. The two top scorers (bee-swarm-sim, pygame ant-simulation) have no stars listed at all.
+- **Stigmergy done simply wins.** The pygame ant-simulation tied for first by doing the basics right: explicit dependency manifest, documented rules, and the only non-BeeStack entry to score Data Disclosure above 25.
+- **Code Availability converges at 67 for every non-archived repo.** BeeStack (100) is the sole exception because it deposits a checksummed, versioned snapshot on Zenodo. The dimension that actually separates the field is Traceability.
+- **Dataset Resolvability is 0 for 13 of 14.** Only ant-colony-optimization (33) scores anything, thanks to a bundled map JSON. No sim deposits output data with accession numbers — the clearest shared gap.
+- **The fastest path to a higher score** is: (1) archive to Zenodo for a DOI, (2) add a parameters table mapping constants to cited sources, (3) pin dependency versions and add a deterministic seed, (4) deposit one example output file.
 
 ---
 
