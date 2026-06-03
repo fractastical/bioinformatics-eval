@@ -1,0 +1,824 @@
+Build this as an **evidence-first, multi-agent provenance evaluator**, not as a generic “paper summarizer.” The core output should be a traceability map answering:
+
+**For every dataset, data source, simulation parameter, generated file, and code module: where did it come from, where is it stated in the paper, and can it be independently resolved?**
+
+The evaluator should produce a score, but the main value is the **evidence graph** behind the score.
+
+## 1. Define the evaluator’s job precisely
+
+The evaluator should assess five things:
+
+1. **Dataset disclosure**: Does the paper clearly state all original, public, private, simulated, and derived datasets?
+2. **Dataset resolvability**: Are dataset identifiers, repository links, DOIs, accessions, versions, and access conditions enough to retrieve or request the data?
+3. **Code availability and versioning**: Is the simulation code available at a stable repository, DOI, release, commit hash, container, or archived identifier?
+4. **Code-to-data provenance**: Can each code file/function/notebook/workflow step be connected to a dataset, citation, parameter source, or synthetic-generation rule?
+5. **Simulation derivation clarity**: Does the simulation explain which components are empirically estimated, literature-derived, assumed, synthetic, calibrated, or hard-coded?
+
+This lines up well with FAIR-style evaluation: FAIR is about making digital assets findable, accessible, interoperable, and reusable, and the original FAIR paper explicitly says the principles apply not only to data but also to algorithms, tools, and workflows. ([Nature][1])
+
+## 2. Use a multi-agent architecture
+
+Use separate agents with narrow responsibilities. Each agent should return structured evidence, not prose.
+
+### Agent A: Intake and document parser
+
+Inputs:
+
+```text
+paper_url
+doi
+pmid
+pmcid
+pdf_upload
+supplementary_files
+code_repo_url
+archive_zip
+```
+
+Responsibilities:
+
+```text
+- Resolve DOI / PMID / PMCID when present.
+- Fetch article metadata.
+- Prefer structured full text when available.
+- Parse PDF when only PDF is available.
+- Extract sections, captions, tables, references, data availability, code availability, supplementary notes.
+- Preserve page number, section name, paragraph span, and table/figure location.
+```
+
+For PDF parsing, use a scientific-PDF parser such as GROBID because it converts scholarly PDFs into structured TEI/XML, including sections and bibliographic references. ([grobid.readthedocs.io][2]) For biomedical papers, also use Europe PMC and NCBI where possible: Europe PMC exposes publications and related information through a REST API, and NCBI E-utilities provide API access to Entrez databases such as PubMed and PMC. ([Europe PMC][3])
+
+### Agent B: Paper evidence extractor
+
+This agent extracts all paper-side evidence.
+
+It should look for:
+
+```text
+- Data Availability Statement
+- Code Availability Statement
+- Materials and Methods
+- Simulation methods
+- Model calibration
+- Parameter estimation
+- Supplementary methods
+- Figure/table captions
+- Dataset tables
+- Accession numbers
+- Repository URLs
+- Dataset DOIs
+- Software references
+- Prior studies used as parameter sources
+```
+
+Important: it should extract **positive evidence** and **negative evidence**. For example:
+
+```json
+{
+  "claim": "The paper says sequencing reads are available in SRA under PRJNA123456.",
+  "evidence_type": "positive",
+  "section": "Data Availability",
+  "page": 12,
+  "span": "Raw sequencing reads have been deposited...",
+  "normalized_identifier": "PRJNA123456"
+}
+```
+
+and:
+
+```json
+{
+  "claim": "The paper describes an agent-based simulation but gives no source for transition probabilities.",
+  "evidence_type": "missing",
+  "section": "Simulation Methods",
+  "page": 7,
+  "span": "Transition probabilities were set according to prior knowledge...",
+  "issue": "No citation, dataset, or parameter table provided."
+}
+```
+
+### Agent C: Dataset and accession resolver
+
+This agent verifies whether extracted identifiers actually resolve.
+
+It should recognize common bioinformatics identifiers, including:
+
+```text
+GEO: GSE, GSM, GPL, GDS
+SRA / ENA / DDBJ: SRP, ERP, DRP, SRX, ERX, DRX, SRR, ERR, DRR, SRS, ERS, DRS
+BioProject: PRJNA, PRJEB, PRJDB
+BioSample: SAMN, SAMEA, SAMD
+ArrayExpress / BioStudies: E-MTAB, E-GEOD, S-BSST
+PRIDE / ProteomeXchange: PXD
+dbGaP: phs
+EGA: EGAS, EGAD, EGAN
+PDB: 4-character structure IDs
+UniProt: protein accessions
+Zenodo / Figshare / Dryad / OSF / DataCite DOIs
+```
+
+Use deterministic regex extraction first, then LLM-assisted extraction for ambiguous mentions.
+
+Examples:
+
+```regex
+\bGSE\d+\b
+\bGSM\d+\b
+\bGPL\d+\b
+\bGDS\d+\b
+\bPRJ(N|E|D)[A-Z]?\d+\b
+\bS(R|E|D)(P|X|R|S)\d+\b
+\bPXD\d{6,}\b
+\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b
+```
+
+Validate against repository APIs where possible. NCBI GEO uses GDS, GSE, and GPL identifiers for datasets, series, and platforms; NCBI SRA documents its study/sample/experiment/run accession levels such as SRP, SRX, SRR, and SRS; PRIDE/ProteomeXchange datasets use PXD identifiers. ([NCBI][4])
+
+The resolver should return:
+
+```json
+{
+  "identifier": "PRJNA123456",
+  "repository": "NCBI BioProject/SRA",
+  "resolved": true,
+  "title_match": "partial",
+  "organism_match": "yes",
+  "sample_count_match": "no",
+  "access_status": "public",
+  "version_or_release": null,
+  "problems": [
+    "Paper says 240 samples; repository metadata lists 216 runs."
+  ]
+}
+```
+
+## 3. Build the code-base decomposition layer
+
+Do not treat the repository as one blob. Break it into units.
+
+A good hierarchy is:
+
+```text
+Repository
+  ├── release / commit / archived DOI / SWHID
+  ├── environment files
+  │   ├── requirements.txt
+  │   ├── environment.yml
+  │   ├── Dockerfile
+  │   └── renv.lock
+  ├── workflow files
+  │   ├── Snakefile
+  │   ├── Nextflow config
+  │   ├── WDL / CWL
+  │   └── Makefile
+  ├── scripts
+  │   ├── data download
+  │   ├── preprocessing
+  │   ├── parameter estimation
+  │   ├── simulation
+  │   ├── analysis
+  │   └── plotting
+  ├── notebooks
+  ├── config files
+  ├── embedded data
+  └── generated outputs
+```
+
+The code agent should identify:
+
+```text
+- Files read from disk
+- Files written to disk
+- URLs downloaded
+- Accessions embedded in code
+- Dataset names embedded in code
+- Hard-coded parameters
+- Random seeds
+- Simulation distributions
+- Calibration targets
+- Input config values
+- Figure/table output names
+- Dependency chains between scripts
+```
+
+For Python, parse ASTs. For R, parse source expressions and function calls. For notebooks, extract cells and execution order. For Snakemake, Nextflow, CWL, WDL, or Makefiles, parse workflow rules as first-class code units.
+
+A useful code-unit schema:
+
+```json
+{
+  "code_unit_id": "src/simulate_population.py::initialize_agents",
+  "language": "python",
+  "unit_type": "function",
+  "role": "simulation_initialization",
+  "reads": ["data/processed/cell_type_frequencies.csv"],
+  "writes": ["outputs/initial_population.parquet"],
+  "parameters": [
+    {
+      "name": "initial_cell_count",
+      "value": 100000,
+      "source": "hard_coded",
+      "line": 48
+    }
+  ],
+  "paper_links": [],
+  "dataset_links": [],
+  "issues": [
+    "Input file is derived, but upstream raw dataset is not identified in code comments or README."
+  ]
+}
+```
+
+## 4. Classify every simulation input
+
+For simulation studies, the most important distinction is **what kind of source each simulation element has**.
+
+Use this classification:
+
+```text
+A. Direct empirical data
+   The code loads a raw or processed file that resolves to a declared dataset.
+
+B. Derived empirical data
+   The code loads an intermediate file generated from a declared dataset.
+
+C. Literature-derived parameter
+   The code uses a value justified by a citation.
+
+D. Calibrated parameter
+   The code estimates or tunes the value from data, optimization, ABC, MCMC, regression, fitting, or calibration.
+
+E. Synthetic assumption
+   The paper clearly says the value/distribution is assumed or hypothetical.
+
+F. Hard-coded opaque value
+   The code contains the value, but the paper does not explain where it came from.
+
+G. Undisclosed external data
+   The code loads or downloads data not mentioned in the paper.
+
+H. Inaccessible private data
+   The paper mentions the data but access is restricted or only “available on request.”
+
+I. Unresolvable reference
+   The paper cites a source, but the exact dataset/version/file cannot be identified.
+```
+
+The evaluator should be strict: a simulation parameter is not “traceable” merely because there is a citation nearby. It should require a direct link to a table, equation, supplement, code comment, config file, dataset field, or cited paper section.
+
+## 5. Build a provenance graph
+
+Represent everything as nodes and edges.
+
+### Node types
+
+```text
+Paper
+Paper section
+Paragraph/span
+Table
+Figure
+Reference
+Dataset
+Repository record
+Code repository
+Code file
+Function
+Notebook cell
+Workflow rule
+Parameter
+Intermediate file
+Output figure/table
+```
+
+### Edge types
+
+```text
+MENTIONS
+CITES
+DECLARES_AVAILABLE
+RESOLVES_TO
+LOADS
+WRITES
+DERIVED_FROM
+CALIBRATED_FROM
+PARAMETERIZED_BY
+GENERATES
+SUPPORTS_FIGURE
+UNSUPPORTED_BY
+CONFLICTS_WITH
+```
+
+Example:
+
+```json
+{
+  "source": "src/calibrate.py::fit_transmission_rate",
+  "edge": "CALIBRATED_FROM",
+  "target": "dataset:GSE123456",
+  "evidence": [
+    {
+      "type": "code",
+      "file": "src/calibrate.py",
+      "line_start": 22,
+      "line_end": 73
+    },
+    {
+      "type": "paper",
+      "section": "Methods",
+      "page": 6,
+      "span": "Model parameters were fitted using GSE123456..."
+    }
+  ],
+  "confidence": 0.91
+}
+```
+
+This graph is the core product. The score should be derived from the graph, not from a free-form LLM impression.
+
+## 6. Use retrieval plus deterministic checks
+
+A good workflow is:
+
+```text
+1. Parse the paper.
+2. Extract all candidate data/code/source mentions.
+3. Resolve all identifiers and URLs.
+4. Clone or unpack code.
+5. Build code-unit index.
+6. Extract all code I/O and parameters.
+7. Link code units to paper spans, references, datasets, and supplementary files.
+8. Identify unlinked code inputs and unexplained parameters.
+9. Run adversarial review agent to challenge weak links.
+10. Generate final report with evidence, scores, and uncertainty.
+```
+
+Use APIs for external metadata. Crossref exposes bibliographic metadata through a public REST API; DataCite provides a REST API for DOI metadata; OpenAlex provides an open catalog/API for scholarly works and related entities. ([www.crossref.org][5]) For software persistence, prefer stable releases, archived repositories, Zenodo DOIs, or Software Heritage identifiers; Software Heritage identifiers can point to software artifacts such as contents, directories, revisions, releases, and snapshots. ([docs.softwareheritage.org][6])
+
+## 7. Give the evaluator a concrete scoring rubric
+
+Use a 100-point rubric.
+
+### A. Paper-level data disclosure: 20 points
+
+```text
+20 = All datasets listed with repository, accession/DOI, version/date, access terms, and role in study.
+15 = Most datasets listed, but some versions/files/roles unclear.
+10 = Data availability statement exists but is vague or incomplete.
+5  = Mentions datasets in prose but no systematic availability statement.
+0  = No identifiable dataset disclosure.
+```
+
+### B. Dataset resolvability: 15 points
+
+```text
+15 = All identifiers resolve and metadata match the paper.
+10 = Most resolve; minor metadata mismatches.
+5  = Some resolve but key datasets are inaccessible or ambiguous.
+0  = Identifiers missing, broken, private without process, or non-resolvable.
+```
+
+### C. Code availability and versioning: 15 points
+
+```text
+15 = Code is public, versioned, archived, documented, and tied to the paper.
+10 = Code is public but no release/commit/archive.
+5  = Code exists but incomplete, stale, or lacks execution instructions.
+0  = No code, private code, or “available upon request.”
+```
+
+Springer Nature’s policy says code availability statements should describe what code is available, where it can be found, and access terms; Nature Portfolio also requires data availability statements for original research, with access conditions for the minimum dataset needed to interpret, verify, and extend the work. ([Springer Nature][7])
+
+### D. Code-to-data traceability: 20 points
+
+```text
+20 = Every data-loading and preprocessing step maps to declared datasets or generated intermediates.
+15 = Main paths traceable; minor helper files unclear.
+10 = Some traceability, but important preprocessing or derived files unexplained.
+5  = Code loads files that are not declared or documented.
+0  = Cannot connect code inputs to paper data sources.
+```
+
+### E. Simulation derivation clarity: 20 points
+
+```text
+20 = Every simulation parameter, distribution, initial condition, calibration target, and random seed is traceable.
+15 = Main parameters traceable; some constants or assumptions unclear.
+10 = Some parameters explained, but calibration/assumptions incomplete.
+5  = Many hard-coded or unexplained values.
+0  = Simulation behavior cannot be traced to data, citations, or explicit assumptions.
+```
+
+### F. Reproducibility package quality: 10 points
+
+```text
+10 = Environment, workflow, test data, instructions, expected outputs, and checksums are present.
+7  = Mostly runnable with minor gaps.
+4  = Significant manual reconstruction required.
+0  = Not practically runnable.
+```
+
+Oxford’s *Bioinformatics* author guidelines require a data availability statement that explains the availability of original and third-party data underlying the reported results and asks authors to link to the data or provide unique identifiers where possible. ([OUP Academic][8])
+
+## 8. Make the report useful to reviewers
+
+The final report should have these sections:
+
+```text
+1. Executive scorecard
+2. Dataset inventory
+3. Code inventory
+4. Simulation provenance map
+5. Traceability matrix
+6. Broken or ambiguous links
+7. Undisclosed data/code dependencies
+8. Hard-coded or unexplained simulation parameters
+9. Reproducibility risks
+10. Recommended author questions
+11. Machine-readable JSON export
+```
+
+The most useful table is the traceability matrix:
+
+| Code unit                      | Role                      | Input/parameter             | Claimed source | Evidence                      | Status      |
+| ------------------------------ | ------------------------- | --------------------------- | -------------- | ----------------------------- | ----------- |
+| `simulate.py::init_population` | simulation initialization | `cell_type_frequencies.csv` | GEO `GSE...`   | Methods p.5 + code line 42    | Traceable   |
+| `calibrate.R::fit_beta`        | parameter fitting         | `beta`                      | “prior study”  | citation only, no table/value | Weak        |
+| `config.yml`                   | simulation config         | `mutation_rate = 1e-6`      | none           | hard-coded                    | Unexplained |
+| `download.sh`                  | data acquisition          | external URL                | not in paper   | code line 8                   | Undisclosed |
+
+## 9. Make the agents evidence-constrained
+
+Use prompts that forbid unsupported conclusions.
+
+### Dataset extraction prompt
+
+```text
+You are extracting dataset and data-source evidence from a bioinformatics paper.
+
+Return only JSON. Extract every mention of:
+- public datasets
+- private datasets
+- generated datasets
+- synthetic datasets
+- accession numbers
+- dataset DOIs
+- supplementary files
+- code repositories
+- simulation parameter sources
+- citations used as data or parameter sources
+
+For each item, include:
+- exact quote/span
+- section
+- page or paragraph id
+- normalized identifier if present
+- repository if inferable
+- access terms
+- role in the study
+- confidence
+- missing details
+
+Do not infer availability unless explicitly stated.
+```
+
+### Code decomposition prompt
+
+```text
+You are mapping a bioinformatics simulation codebase.
+
+For each file, function, notebook cell, workflow rule, or config block:
+- classify its role
+- list all files read
+- list all files written
+- list URLs or accessions used
+- list hard-coded parameters
+- list random seeds
+- list package dependencies
+- identify whether the unit performs data download, preprocessing, calibration, simulation, analysis, or plotting
+- cite line numbers
+
+Return structured JSON only.
+```
+
+### Provenance-linking prompt
+
+```text
+Given paper evidence, dataset resolver results, and code-unit records, create provenance edges.
+
+Allowed relation types:
+LOADS, WRITES, DERIVED_FROM, CALIBRATED_FROM, PARAMETERIZED_BY, CITES, GENERATES, SUPPORTS_FIGURE, UNSUPPORTED_BY, CONFLICTS_WITH.
+
+Each edge must include:
+- source node
+- target node
+- evidence from paper, code, or resolver
+- confidence
+- reason
+- uncertainty
+
+Do not create an edge based only on topical similarity.
+```
+
+### Critic prompt
+
+```text
+You are auditing provenance links for overclaiming.
+
+For each proposed link:
+- determine whether the evidence is direct, indirect, weak, or absent
+- flag links that rely only on semantic similarity
+- flag identifiers that do not resolve
+- flag code inputs missing from paper disclosure
+- flag paper datasets not used in code
+- flag simulation parameters without source
+```
+
+## 10. Use confidence levels conservatively
+
+A simple confidence scheme:
+
+```text
+High:
+- Accession/DOI appears in paper and code.
+- Repository metadata matches title/organism/sample count.
+- Code file loads data with same identifier or documented derivative.
+
+Medium:
+- Paper names dataset; code loads derived file; README explains transformation.
+- Citation supports parameter but exact value is in supplement/config.
+
+Low:
+- Dataset inferred only from similar names.
+- Citation is broad and does not identify exact data.
+- Code comments mention source but no accession/DOI.
+
+None:
+- Hard-coded value with no source.
+- File loaded by code is absent from paper and README.
+- Broken link or unresolved accession.
+```
+
+## 11. Add bioinformatics-specific checks
+
+For bioinformatics, the evaluator should check:
+
+```text
+- Organism / taxon match
+- Genome build / reference assembly
+- Annotation version
+- Sample count
+- Run count
+- Assay type
+- Sequencing platform
+- Preprocessing pipeline
+- Normalization method
+- Batch correction
+- Train/test split provenance
+- Exclusion criteria
+- Clinical metadata availability
+- Controlled-access restrictions
+- Whether raw data, processed data, or only summary data are available
+```
+
+For SRA, pay attention to hierarchy: study, sample, experiment, and run accessions are distinct; code may load SRR run files while the paper cites only a BioProject or study accession. ([NCBI][9]) That is not automatically wrong, but the evaluator should verify whether the run-level files correspond to the declared study.
+
+## 12. Handle simulation code with special care
+
+For simulation code, create a dedicated **simulation audit**.
+
+Ask:
+
+```text
+- What entities are simulated?
+- What state variables exist?
+- What transition rules exist?
+- What stochastic distributions are used?
+- What parameters control those distributions?
+- Which parameters are estimated from data?
+- Which parameters are copied from literature?
+- Which parameters are assumptions?
+- Which values are hard-coded?
+- Which seed controls randomness?
+- Which input files initialize the simulation?
+- Which outputs correspond to paper figures/tables?
+```
+
+For every parameter, require one of these labels:
+
+```text
+empirical_estimate
+literature_value
+calibrated_value
+synthetic_assumption
+default_software_value
+hard_coded_unexplained
+```
+
+A strong evaluator should not penalize assumptions merely for being assumptions. It should penalize **unstated assumptions**.
+
+## 13. Include static and dynamic code analysis
+
+Use both.
+
+### Static analysis
+
+```text
+- AST parsing
+- dependency graph
+- imports
+- function calls
+- file I/O calls
+- URL strings
+- accession regex matches
+- config parsing
+- workflow DAG parsing
+- notebook cell parsing
+```
+
+### Dynamic analysis
+
+Run only in a sandbox.
+
+```text
+- no host secrets
+- restricted filesystem
+- controlled network or no network
+- pinned environment
+- log file reads/writes
+- log HTTP requests
+- record generated outputs
+- capture random seeds
+- compare expected vs actual output files
+```
+
+Do not execute untrusted research code on a normal workstation. Treat paper repositories like arbitrary third-party code.
+
+## 14. Use negative findings as first-class output
+
+Many evaluators fail because they only list what they found. Yours should also list what it could not find.
+
+Examples:
+
+```text
+- “No code file appears to download or load GSE123456, although the paper says it was used.”
+- “The repository contains data/raw/patient_metadata.csv, but the paper does not disclose a source or access condition for patient metadata.”
+- “The simulation uses contact_rate = 0.037 in config.yml, but no paper span, supplement, or citation supports this value.”
+- “The paper cites a prior study for model parameters, but does not identify which table, parameter set, or cohort was reused.”
+```
+
+This is especially important for simulation provenance.
+
+## 15. Minimal implementation stack
+
+A practical MVP:
+
+```text
+Backend:
+- Python
+- FastAPI
+- PostgreSQL or SQLite for metadata
+- Neo4j, NetworkX, or simple edge tables for provenance graph
+- GROBID service for PDF parsing
+- PyMuPDF/pdfplumber for page-level fallback extraction
+- GitPython for repository cloning
+- tree-sitter / Python ast / R parser / notebook parser
+- requests/httpx for repository and metadata APIs
+
+External resolvers:
+- Europe PMC
+- NCBI E-utilities
+- Crossref
+- DataCite
+- OpenAlex
+- GEO/SRA/ENA/PRIDE/BioStudies where relevant
+
+Frontend:
+- Upload/link form
+- Dataset inventory table
+- Code browser
+- Provenance graph view
+- Traceability matrix
+- Exportable PDF/HTML/JSON report
+```
+
+## 16. MVP pseudocode
+
+```python
+def evaluate_paper_and_code(paper_input, code_input=None):
+    doc = ingest_document(paper_input)
+    paper_evidence = extract_paper_evidence(doc)
+
+    dataset_candidates = extract_dataset_identifiers(doc, paper_evidence)
+    dataset_records = resolve_datasets(dataset_candidates)
+
+    code_repo = ingest_code(code_input or paper_evidence.discovered_code_links)
+    code_units = decompose_codebase(code_repo)
+
+    code_io = extract_code_io_and_parameters(code_units)
+    provenance_edges = link_code_to_datasets_and_citations(
+        paper_evidence=paper_evidence,
+        dataset_records=dataset_records,
+        code_units=code_units,
+        code_io=code_io,
+    )
+
+    simulation_audit = audit_simulation_parameters(
+        code_units=code_units,
+        paper_evidence=paper_evidence,
+        provenance_edges=provenance_edges,
+    )
+
+    issues = run_critic_checks(
+        paper_evidence=paper_evidence,
+        dataset_records=dataset_records,
+        code_units=code_units,
+        provenance_edges=provenance_edges,
+        simulation_audit=simulation_audit,
+    )
+
+    scores = score_traceability(
+        paper_evidence=paper_evidence,
+        dataset_records=dataset_records,
+        code_units=code_units,
+        provenance_edges=provenance_edges,
+        simulation_audit=simulation_audit,
+        issues=issues,
+    )
+
+    return build_report(
+        scores=scores,
+        dataset_inventory=dataset_records,
+        code_inventory=code_units,
+        provenance_edges=provenance_edges,
+        simulation_audit=simulation_audit,
+        issues=issues,
+    )
+```
+
+## 17. What “good” looks like
+
+A high-quality paper/repository should let the evaluator say:
+
+```text
+The paper declares all datasets.
+Every accession resolves.
+Repository metadata matches the organism, cohort, assay type, and sample count.
+The code repository is versioned and tied to the paper.
+Every raw input file is either downloaded by code, included as test data, or linked to a repository record.
+Every processed file has an upstream derivation path.
+Every simulation parameter is linked to a data-derived estimate, a cited literature value, or an explicit assumption.
+Every figure/table output can be traced back to code and inputs.
+```
+
+A weak paper/repository will produce findings like:
+
+```text
+The paper has a generic data availability statement.
+The repository contains unexplained CSV/RDS/PKL files.
+The simulation uses hard-coded constants without citations.
+The code and paper disagree on sample counts.
+The code downloads data from URLs not disclosed in the paper.
+No release, commit hash, DOI, or archived copy identifies the exact code version.
+```
+
+## 18. Best practices that matter most
+
+The evaluator should be **evidence-backed, resolver-backed, and adversarial**.
+
+Do this:
+
+```text
+- Store every claim with page/span/line evidence.
+- Separate “mentioned” from “resolved.”
+- Separate “available” from “reproducible.”
+- Treat code files, notebooks, workflows, and configs as separate evidence sources.
+- Require exact dataset/version/file mapping wherever possible.
+- Flag undocumented derived files.
+- Flag paper/code mismatches.
+- Use a critic agent to challenge weak provenance links.
+- Export machine-readable JSON so results can be audited.
+```
+
+Avoid this:
+
+```text
+- Do not let the LLM invent missing provenance.
+- Do not mark a dataset as available just because a repository name appears.
+- Do not mark code as reproducible just because GitHub exists.
+- Do not assume a citation explains a parameter unless the value/rule is traceable.
+- Do not ignore supplementary files; many key dataset tables and simulation parameters live there.
+- Do not collapse all code into one “repository available” checkbox.
+```
+
+The most important design decision is this: **make the evaluator produce a traceability matrix before it produces a score.** The score is only credible when every point can be traced to paper text, repository metadata, code lines, and explicit unresolved gaps.
+
+[1]: https://www.nature.com/articles/sdata201618?utm_source=chatgpt.com "The FAIR Guiding Principles for scientific data ..."
+[2]: https://grobid.readthedocs.io/en/latest/Introduction/?utm_source=chatgpt.com "Introduction - GROBID Documentation - Read the Docs"
+[3]: https://europepmc.org/RestfulWebService?utm_source=chatgpt.com "Articles RESTful API"
+[4]: https://www.ncbi.nlm.nih.gov/geo/info/datasets.html?utm_source=chatgpt.com "About GEO DataSets - NCBI - NIH"
+[5]: https://www.crossref.org/documentation/retrieve-metadata/rest-api/?utm_source=chatgpt.com "Documentation - Metadata Retrieval - REST API"
+[6]: https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html?utm_source=chatgpt.com "SoftWare Heritage persistent IDentifiers (SWHIDs)"
+[7]: https://www.springernature.com/gp/open-science/code-policy?utm_source=chatgpt.com "Code Policy | Open science | Springer Nature"
+[8]: https://academic.oup.com/bioinformatics/pages/author-guidelines?utm_source=chatgpt.com "Author guidelines | Bioinformatics - Oxford Academic"
+[9]: https://www.ncbi.nlm.nih.gov/sra/docs/srasearch?utm_source=chatgpt.com "Search in SRA Entrez - NCBI"
