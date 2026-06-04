@@ -1,0 +1,21 @@
+It is a cool format!
+I would recommend some manual due diligence though // improvements to the pipeline, lest the reviews become their own infohazards. 
+
+For example just on the BeeStack
+- Zenodo DOIs do not “resolve in Crossref” in the sense of having metadata in the Crossref API or being treated as Crossref DOIs. They are DataCite DOIs. So the Crossref point overall is a non-sequitur and outside the hands of the author. 
+
+- “No specific accession numbers, repository links, or version identifiers are provided for the curated empirical BeeBrain datasets” is completely false: https://github.com/docxology/BeeStack/blob/main/src/beestack/brain/datasets.py
+
+- “The GitHub repository URL (https://github.com/docxology/BeeStack) was not confirmed as publicly accessible, non-empty, or
+
+containing the described software content at the time of audit” — that is where all the information is (obviously not checked). The PDF is a report on a software package, so the “Code Availability” was given 100% yet the report cannot determine if the repo is available? I could easily just render all the code into a 1000 page PDF, but I don’t think that is the point, hence the PDF-only review is fallacious. 
+
+- “The publication date of 'May 27, 2026' is a future date,” but the report says Evaluated on June 3, so there are some date mixups. 
+
+- “”The relationship between the GitHub repository contents and the Zenodo-deposited archive is unverified — it is not confirmed that
+
+the archived source matches the GitHub tag v1.0.0 commit. — Actually with the double-publish method I use, I have the Zenodo and Githubs cross-reference each other with hashes (something I have not seen done anywhere else). 
+
+
+So as at the domain author & meta-scientist level, it provided essentially no relevant information or suggestions. 
+Again I think the approach/possibility of review is good, though some of this would have to be resolved (and it would help to have an example of what a 100% score represents, that's what I continually version and update with the projects in https://github.com/docxology/template/tree/main/projects/templates ). 

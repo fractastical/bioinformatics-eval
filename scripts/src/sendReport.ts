@@ -69,44 +69,34 @@ function addEvalSection(doc: PDFKit.PDFDocument, ev: Evaluation): void {
   const margin = 50;
   const pageWidth = doc.page.width - margin * 2;
 
-  // Title bar
-  doc.rect(margin, doc.y, pageWidth, 32).fillColor(COLORS.primary).fill();
-  doc
-    .fontSize(14)
-    .fillColor("white")
-    .text(ev.title, margin + 10, doc.y - 28, { width: pageWidth - 20 });
-  doc.moveDown(0.3);
+  // --- Title bar (anchor to titleY before drawing anything) ---
+  const titleY = doc.y;
+  doc.rect(margin, titleY, pageWidth, 36).fillColor(COLORS.primary).fill();
+  doc.fontSize(13).fillColor("white").text(ev.title, margin + 10, titleY + 10, { width: pageWidth - 20, lineBreak: false });
+  doc.y = titleY + 42; // advance cursor past the bar
 
   // URL + date row
   const url = ev.paperUrl ?? "—";
-  doc
-    .fontSize(8)
-    .fillColor(COLORS.midGray)
-    .text(`Source: ${url}`, margin, doc.y, { width: pageWidth - 120, lineBreak: false });
-  doc
-    .fontSize(8)
-    .fillColor(COLORS.midGray)
-    .text(
-      `Evaluated: ${new Date(ev.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
-      margin + pageWidth - 120,
-      doc.y - doc.currentLineHeight(),
-      { width: 120, align: "right" }
-    );
-  doc.moveDown(0.8);
+  const metaY = doc.y;
+  doc.fontSize(8).fillColor(COLORS.midGray)
+    .text(`Source: ${url}`, margin, metaY, { width: pageWidth - 160, lineBreak: false });
+  const dateStr = new Date(ev.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  doc.fontSize(8).fillColor(COLORS.midGray)
+    .text(`Evaluated: ${dateStr}`, margin + pageWidth - 155, metaY, { width: 155, align: "right" });
+  doc.y = metaY + 18;
 
-  // Overall score callout
-  const scoreBoxY = doc.y;
-  doc.rect(margin, scoreBoxY, 110, 54).fillColor(COLORS.lightGray).fill();
-  doc
-    .fontSize(36)
-    .fillColor(scoreColor(ev.overallScore))
-    .text(ev.overallScore.toFixed(1), margin, scoreBoxY + 4, { width: 110, align: "center" });
-  doc
-    .fontSize(9)
-    .fillColor(COLORS.midGray)
-    .text("Overall Score /100", margin, scoreBoxY + 40, { width: 110, align: "center" });
+  // --- Score callout box + dimension bars (both anchored to scoreY) ---
+  const scoreY = doc.y;
+  const scoreBoxH = 110;
 
-  // Dimension bars
+  // Score box
+  doc.rect(margin, scoreY, 110, scoreBoxH).fillColor(COLORS.lightGray).fill();
+  doc.fontSize(38).fillColor(scoreColor(ev.overallScore))
+    .text(ev.overallScore.toFixed(1), margin, scoreY + 12, { width: 110, align: "center" });
+  doc.fontSize(8).fillColor(COLORS.midGray)
+    .text("Overall /100", margin, scoreY + 56, { width: 110, align: "center" });
+
+  // Dimension bars — pinned to scoreY, independent of cursor
   const barsX = margin + 120;
   const barsWidth = pageWidth - 120;
   const dims: [string, number][] = [
@@ -117,13 +107,11 @@ function addEvalSection(doc: PDFKit.PDFDocument, ev: Evaluation): void {
     ["Simulation Clarity", ev.simulationClarityScore],
     ["Reproducibility Pkg", ev.reproPackageScore],
   ];
-  let barsY = scoreBoxY + 2;
-  for (const [label, score] of dims) {
-    drawScoreBar(doc, barsX, barsY, barsWidth, score ?? 0, label);
-    barsY += 16;
-  }
-  doc.y = Math.max(doc.y, scoreBoxY + 58);
-  doc.moveDown(0.8);
+  dims.forEach(([label, score], i) => {
+    drawScoreBar(doc, barsX, scoreY + 4 + i * 17, barsWidth, score ?? 0, label);
+  });
+
+  doc.y = scoreY + scoreBoxH + 10;
 
   // Summary
   doc.fontSize(10).fillColor(COLORS.accent).text("Summary", margin);
@@ -176,58 +164,62 @@ async function buildPDF(evals: Evaluation[]): Promise<Buffer> {
     doc.y = 110;
     doc.moveDown(0.5);
 
-    // Intro blurb
+    // Intro blurb — dynamic
     doc
       .fontSize(9)
       .fillColor(COLORS.darkGray)
       .text(
-        "This report presents structured reproducibility evaluations for two simulation scaffold papers from the docxology research group. Each paper is scored across six dimensions: Data Disclosure, Dataset Resolvability, Code Availability, Traceability, Simulation Clarity, and Reproducibility Package Quality.",
+        `This report presents structured reproducibility evaluations for ${evals.length} computational simulation ${evals.length === 1 ? "project" : "projects"}. Each is scored across six dimensions: Data Disclosure, Dataset Resolvability, Code Availability, Traceability, Simulation Clarity, and Reproducibility Package Quality. Papers are ordered by overall score.`,
         margin,
         doc.y,
         { width: pageWidth, lineGap: 2 }
       );
     doc.moveDown(1.2);
 
-    // Comparison table
-    doc.rect(margin, doc.y, pageWidth, 20).fillColor(COLORS.accent).fill();
-    doc.fontSize(9).fillColor("white").text("Quick Comparison", margin + 6, doc.y - 16);
-    doc.moveDown(0.3);
+    // Comparison table — all 6 dimensions
+    const headerBarY = doc.y;
+    doc.rect(margin, headerBarY, pageWidth, 20).fillColor(COLORS.accent).fill();
+    doc.fontSize(9).fillColor("white").text("All Papers — Score Summary", margin + 6, headerBarY + 5);
+    doc.y = headerBarY + 24;
 
-    const headers = ["Paper", "Overall", "Code", "Simulation", "Reproducibility"];
-    const colWidths = [220, 60, 60, 70, 80];
+    const headers = ["Paper", "Score", "Disclosure", "Dataset", "Code", "Trace", "Sim", "Repro"];
+    const colWidths = [162, 40, 52, 46, 40, 42, 40, 43];
     let tableX = margin;
     const tableY = doc.y;
-    doc.rect(margin, tableY, pageWidth, 16).fillColor(COLORS.lightGray).fill();
+    doc.rect(margin, tableY, pageWidth, 14).fillColor(COLORS.lightGray).fill();
     headers.forEach((h, i) => {
-      doc.fontSize(8).fillColor(COLORS.darkGray).text(h, tableX + 4, tableY + 4, { width: colWidths[i] });
+      doc.fontSize(7).fillColor(COLORS.darkGray).text(h, tableX + 3, tableY + 3, { width: colWidths[i] });
       tableX += colWidths[i];
     });
-    doc.y = tableY + 18;
+    doc.y = tableY + 16;
 
     for (const ev of evals) {
       const rowY = doc.y;
       tableX = margin;
       const rowData = [
-        ev.title.slice(0, 40) + (ev.title.length > 40 ? "…" : ""),
+        ev.title.slice(0, 38) + (ev.title.length > 38 ? "…" : ""),
         ev.overallScore.toFixed(1),
+        (ev.dataSourceScore ?? 0).toFixed(0),
+        (ev.datasetScore ?? 0).toFixed(0),
         (ev.reproducibilityScore ?? 0).toFixed(0),
+        (ev.citationScore ?? 0).toFixed(0),
         (ev.simulationClarityScore ?? 0).toFixed(0),
         (ev.reproPackageScore ?? 0).toFixed(0),
       ];
       rowData.forEach((cell, i) => {
         const color = i > 0 ? scoreColor(parseFloat(cell)) : COLORS.darkGray;
-        doc.fontSize(8).fillColor(color).text(cell, tableX + 4, rowY + 3, { width: colWidths[i] });
+        doc.fontSize(7.5).fillColor(color).text(cell, tableX + 3, rowY + 3, { width: colWidths[i], lineBreak: false });
         tableX += colWidths[i];
       });
-      doc.y = rowY + 16;
+      doc.y = rowY + 14;
     }
     doc.moveDown(1.5);
     doc.rect(margin, doc.y, pageWidth, 1).fillColor("#e2e8f0").fill();
     doc.moveDown(1.2);
 
-    // Detailed sections
+    // Detailed sections — each paper starts on a fresh page
     for (const ev of evals) {
-      if (doc.y > 650) doc.addPage();
+      doc.addPage();
       addEvalSection(doc, ev);
     }
 
@@ -250,25 +242,33 @@ async function buildPDF(evals: Evaluation[]): Promise<Buffer> {
   });
 }
 
-async function sendEmail(pdfBuffer: Buffer): Promise<void> {
+async function sendEmail(pdfBuffer: Buffer, evals: Evaluation[]): Promise<void> {
   const connectors = new ReplitConnectors();
   const b64 = pdfBuffer.toString("base64");
+
+  const sorted = [...evals].sort((a, b) => b.overallScore - a.overallScore);
+  const listItems = sorted
+    .map(e => `  <li><strong>${e.title}</strong> — Overall: <strong>${e.overallScore.toFixed(1)} / 100</strong></li>`)
+    .join("\n");
+
+  const slugs = sorted.map(e => e.title.split(/\s+/).slice(0, 3).join("_")).join("_&_");
+  const filename = `BioEval_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
 
   const body = {
     from: "BioEval <joel@bioelectricitynexus.com>",
     to: ["jdietz@mit.edu"],
-    subject: "BioEval Reproducibility Report — AntStack & BeeStack",
+    subject: `BioEval Reproducibility Report — ${evals.length} Simulation Projects`,
     html: `<p>Hi,</p>
-<p>Please find attached the BioEval reproducibility evaluation report for two simulation scaffold papers:</p>
+<p>Please find attached the BioEval reproducibility evaluation report for ${evals.length} computational simulation ${evals.length === 1 ? "project" : "projects"}, ranked by overall score:</p>
 <ul>
-  <li><strong>BeeStack</strong> — Evidence-Typed Scaffold for Whole-Colony Honeybee Simulation (Overall: 46.1 / 100)</li>
-  <li><strong>AntStack</strong> — Reproducible Workspace for Ant-Inspired Simulation &amp; Complexity Energetics</li>
+${listItems}
 </ul>
-<p>Each paper is scored across six dimensions: Data Disclosure, Dataset Resolvability, Code Availability, Code-to-Data Traceability, Simulation Clarity, and Reproducibility Package Quality.</p>
+<p>Each project is scored across six dimensions: Data Disclosure, Dataset Resolvability, Code Availability, Code-to-Data Traceability, Simulation Clarity, and Reproducibility Package Quality.</p>
+<p>Full findings, gaps, and recommendations for each project are included in the attached PDF.</p>
 <p>Best,<br/>BioEval</p>`,
     attachments: [
       {
-        filename: "BioEval_AntStack_BeeStack_Report.pdf",
+        filename,
         content: b64,
       },
     ],
@@ -290,24 +290,31 @@ async function sendEmail(pdfBuffer: Buffer): Promise<void> {
 }
 
 async function main() {
-  console.log("Fetching evaluations...");
-  const [beestack, antstack] = await Promise.all([fetchEval(12), fetchEval(35)]);
+  const ids: number[] = process.argv.slice(2).map(Number).filter(Boolean);
+  const evalIds = ids.length > 0 ? ids : [12, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47];
 
-  if (antstack.overallScore == null || beestack.overallScore == null) {
-    console.error("One or both evaluations not yet complete. Re-run after analysis finishes.");
+  console.log(`Fetching evaluations: ${evalIds.join(", ")}...`);
+  const evals = await Promise.all(evalIds.map(fetchEval));
+
+  const incomplete = evals.filter(e => e.overallScore == null);
+  if (incomplete.length > 0) {
+    console.error(`Not yet complete: ${incomplete.map(e => `#${e.id} ${e.title}`).join(", ")}`);
     process.exit(1);
   }
 
-  console.log(`BeeStack: ${beestack.overallScore} | AntStack: ${antstack.overallScore}`);
+  // Highest-scoring papers first, everywhere (cover table, detail pages, email)
+  evals.sort((a, b) => b.overallScore - a.overallScore);
+
+  evals.forEach(e => console.log(`  #${e.id} ${e.title}: ${e.overallScore}`));
 
   console.log("Generating PDF...");
-  const pdfBuffer = await buildPDF([beestack, antstack]);
-  const outPath = path.join(process.cwd(), "antstack_beestack_report.pdf");
+  const pdfBuffer = await buildPDF(evals);
+  const outPath = path.join(process.cwd(), "bee_ant_report.pdf");
   fs.writeFileSync(outPath, pdfBuffer);
   console.log(`PDF saved: ${outPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`);
 
   console.log("Sending email to jdietz@mit.edu...");
-  await sendEmail(pdfBuffer);
+  await sendEmail(pdfBuffer, evals);
 }
 
 main().catch((e) => {

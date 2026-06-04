@@ -1,1 +1,4 @@
 - [React Query refetchInterval typing](react-query-refetch-interval.md) — UseQueryOptions requires queryKey; use `as any` cast to pass dynamic refetchInterval callback to Orval-generated hooks
+- [Scoring granularity](scoring-granularity.md) — LLM rubric scores snap to discrete tiers; feed real per-item external signals (e.g. live GitHub repo facts) to differentiate.
+- [DOI resolution & evidence discipline](doi-and-evidence-discipline.md) — query Crossref AND DataCite; chunk+backoff resolver calls; give EVERY finding-emitting agent the same "no unverified-gap" rules; scan repo source not just PDF.
+- [SSRF, PDF & async-failure hardening](api-fetch-and-ssrf-hardening.md) — re-validate every redirect hop; full IPv6 parsing for private ranges; cap+timeout downloads; async routes 201 then persist status:"error"; null scores on failure.

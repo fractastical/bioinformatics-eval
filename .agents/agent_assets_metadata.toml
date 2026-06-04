@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Q1KtgL73KWb3CSI4eKA49"
+uri = "file://scripts/antstack_beestack_report.pdf"
+type = "pdf"
+title = "BioEval Report — AntStack & BeeStack (layout fixed)"
+
+[[outputs]]
+id = "l9qJb9EfCdoI7neqEX4Js"
+uri = "file://scripts/bee_ant_report.pdf"
+type = "pdf"
+title = "All 8 Sims — Full 6-Dimension Report"

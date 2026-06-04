@@ -3,6 +3,7 @@
 
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { extractAccessions, resolveAccessions, type ResolvedAccession } from "./accessionResolver";
+import { fetchGithubRepoSignals } from "./githubSignals";
 
 export interface EvidenceItem {
   claim: string;
@@ -110,7 +111,8 @@ Be exhaustive. Extract 5-15 evidence items.`;
 async function agentScorePaper(
   paperText: string,
   evidenceItems: EvidenceItem[],
-  resolvedAccessions: ResolvedAccession[]
+  resolvedAccessions: ResolvedAccession[],
+  repoSignals: string | null
 ): Promise<PaperScores> {
   const resolvedSummary = resolvedAccessions.map(a =>
     `${a.identifier} (${a.repository}): ${a.resolved ? "RESOLVED" : "UNRESOLVED"} — ${a.accessStatus}${a.problems.length ? " — " + a.problems.join("; ") : ""}`
@@ -131,13 +133,37 @@ ${evidenceSummary || "No structured evidence extracted."}
 Dataset accession resolution results:
 ${resolvedSummary || "No accessions identified."}
 
-Score the paper on these 6 dimensions using the exact rubric below. Each score is 0-100 (normalized from the rubric points shown).
+${repoSignals ? `Verified code repository signals (fetched live from the GitHub API — treat as authoritative ground truth, more reliable than prose claims):
+${repoSignals}
 
-RUBRIC:
-1. dataSourceScore [Data Disclosure, 20pts]: 100=all datasets listed with repo+accession+version+access+role; 75=most listed but some versions unclear; 50=Data Availability Statement exists but vague; 25=mentions data in prose only; 0=no disclosure
-2. datasetScore [Dataset Resolvability, 15pts]: 100=all identifiers resolve and metadata match paper; 67=most resolve with minor mismatches; 33=some resolve but key datasets inaccessible; 0=identifiers missing/broken/private
-3. reproducibilityScore [Code Availability & Versioning, 15pts]: 100=code public+versioned+archived+documented; 67=code public but no release/commit/archive; 33=code exists but incomplete or stale; 0=no code or private
-4. citationScore [Code-to-Data Traceability, 20pts]: 100=every data-loading step maps to declared datasets; 75=main paths traceable, minor gaps; 50=some traceability but important preprocessing unexplained; 25=code loads undeclared files; 0=cannot connect code to data
+Use these repository signals as the PRIMARY evidence for Code Availability and Reproducibility Package scoring. Differentiate repos by these concrete facts (license, releases, README size, dependency manifests, tests, CI, recency) rather than defaulting to a single "public repo" value.
+` : "No code repository signals available (no GitHub repo detected)."}
+
+EVALUATION CONTEXT:
+- Today's date is ${new Date().toISOString().slice(0, 10)}. Do NOT treat a paper's publication, preprint, or deposit date as a defect because it is recent or slightly in the future — preprints and versioned archives legitimately carry such dates. NEVER list a "future date" as a reproducibility gap.
+- DOIs are registered through different agencies: journal articles via Crossref, data/software deposits (Zenodo, figshare, Dryad) via DataCite. A DOI absent from Crossref is NOT a defect — the resolution results above already query BOTH registries. NEVER penalize a Zenodo DOI for "not resolving in Crossref"; that is a category error.
+
+EVIDENCE DISCIPLINE (avoid infohazards — false negatives erode trust):
+- Only report gaps you have POSITIVELY verified from the evidence above. If you could not check something, OMIT it — do not present an unchecked item as a deficiency. Silence is not a finding.
+- Specifically forbidden unless the evidence positively shows the problem: claiming a repository is "not confirmed accessible", that an archive's contents are "unverified", or that a Zenodo↔GitHub cross-reference is unconfirmed. If repo signals are present, the repo IS confirmed accessible.
+- When source-file scan results or repo signals show datasets/accessions ARE declared in the code, CREDIT Data Disclosure and Dataset Resolvability — do NOT write "no accessions/datasets provided" when they appear in the repository.
+
+WHAT 100% LOOKS LIKE (calibration anchor):
+- A 100% package: every dataset listed with a resolvable accession/DOI + version + access method; all identifiers resolve with metadata matching the paper; code public + versioned (tagged release or pinned commit) + archived with a DOI + license + dependency manifest with pinned versions + tests + CI; every data-loading step and parameter value traceable to a cited source; a one-command reproducible environment with example data and checksums. Deduct from 100 ONLY for specific, verified missing elements — and say which element is missing.
+
+Score the paper on these 6 dimensions. Each score is a CONTINUOUS integer 0-100.
+
+CRITICAL SCORING INSTRUCTIONS:
+- The numbered levels below are GUIDEPOSTS, not the only allowed values. Do NOT snap to them.
+- Interpolate to any integer between guideposts based on the specific evidence. Two repos that both "lack a release" can still differ by 20+ points if one has a pinned commit, CI, tests, and a thorough README while the other is a bare dump.
+- Reserve round numbers (0, 25, 50, 67, 75, 100) only when the evidence genuinely sits exactly on a guidepost. Otherwise pick the precise value the evidence warrants (e.g. 58, 72, 81).
+- Differentiate aggressively: if two papers feel similar, find the concrete factors (README depth, license, commit pinning, parameter sourcing, dependency manifests, seeds, test data) that separate them and let the scores reflect that.
+
+RUBRIC GUIDEPOSTS:
+1. dataSourceScore [Data Disclosure, 20pts]: 100=all datasets listed with repo+accession+version+access+role; 75=most listed but some versions unclear; 50=Data Availability Statement exists but vague; 25=mentions data in prose only; 0=no disclosure. For simulation papers with no external datasets, score how completely the GENERATIVE inputs (rules, parameters, initial conditions, config files) are disclosed instead of penalizing for absent accessions.
+2. datasetScore [Dataset Resolvability, 15pts]: 100=all identifiers resolve and metadata match paper; 67=most resolve with minor mismatches; 33=some resolve but key datasets inaccessible; 0=identifiers missing/broken/private. IMPORTANT: For rule-based/agent simulations that legitimately use NO external datasets, do not floor this at 0 for lacking accessions — instead judge resolvability of the synthetic-data definition: are the generative rules, parameter tables, and config fully specified and reconstructable (high) vs. described only in prose (low)?
+3. reproducibilityScore [Code Availability & Versioning, 15pts]: 100=code public+versioned+archived (DOI/Zenodo)+documented; 67=code public but no release/commit/archive; 33=code exists but incomplete or stale; 0=no code or private. Interpolate within "public" based on: pinned commit/tag, license present, README depth, dependency manifest (requirements/package.json/Cargo.toml), tests/CI, issue activity. A bare public repo with no README ≈ 45-55; a public repo with pinned deps + thorough README + license but no archive ≈ 78-85.
+4. citationScore [Code-to-Data Traceability, 20pts]: 100=every data-loading/input step maps to declared sources; 75=main paths traceable, minor gaps; 50=some traceability but important preprocessing unexplained; 25=code loads undeclared files; 0=cannot connect code to inputs
 5. simulationClarityScore [Simulation Derivation Clarity, 20pts]: 100=every parameter, distribution, seed traceable; 75=main parameters traceable, some constants unclear; 50=some parameters explained, calibration incomplete; 25=many hard-coded unexplained values; 0=simulation behavior untraceable
 6. reproPackageScore [Reproducibility Package Quality, 10pts]: 100=environment+workflow+test data+instructions+checksums present; 70=mostly runnable with minor gaps; 40=significant manual reconstruction required; 0=not practically runnable
 
@@ -175,7 +201,8 @@ Return ONLY a valid JSON object:
 // Agent D: Critic — challenges weak evidence links
 async function agentCriticReview(
   evidenceItems: EvidenceItem[],
-  resolvedAccessions: ResolvedAccession[]
+  resolvedAccessions: ResolvedAccession[],
+  repoSignals: string | null
 ): Promise<{ challengedItems: EvidenceItem[]; additionalGaps: string[] }> {
   const unresolvedAccessions = resolvedAccessions.filter(a => !a.resolved);
   const positiveItems = evidenceItems.filter(e => e.evidenceType === "positive");
@@ -189,11 +216,24 @@ async function agentCriticReview(
 Positive evidence claims:
 ${positiveItems.map(e => `- [${e.confidence}] ${e.claim} (span: "${e.span}")`).join("\n") || "None"}
 
-Unresolved accessions:
+Already-verified identifiers (these RESOLVED to a public record — do NOT question their existence or speculate they "may not resolve / may not be real"):
+${resolvedAccessions.filter(a => a.resolved).map(a => `- ${a.identifier} (${a.repository})`).join("\n") || "None"}
+
+Unresolved accessions (note: "rate-limited" entries were simply not checked this run — treat them as UNKNOWN, not as defects):
 ${unresolvedAccessions.map(a => `- ${a.identifier} (${a.repository}): ${a.problems.join("; ")}`).join("\n") || "None"}
 
+${repoSignals ? `Verified code repository signals (fetched live from the GitHub API — authoritative ground truth):
+${repoSignals}
+` : "No code repository signals available."}
+
+EVIDENCE DISCIPLINE — read before challenging anything:
+- Only raise an issue you can POSITIVELY justify from the evidence above. If something simply was not checked, OMIT it — never present an unchecked item as a gap. False negatives destroy trust.
+- FORBIDDEN unless the evidence positively shows a problem: claiming a repository is "not confirmed accessible", that a tag/release/archive is "not independently verified to exist", that a Zenodo↔GitHub cross-reference is "unconfirmed", that a license/hash is "not independently verified", or that no re-execution was performed. If repo signals are present, the repo IS confirmed accessible — do not challenge its accessibility.
+- A DOI absent from Crossref is NOT a defect: Zenodo/figshare/Dryad are DataCite DOIs and are resolved separately. Do not flag a resolved DataCite DOI, and do not treat formatting artifacts in extracted IDs as evidence of "broken markup" in the deposit.
+- Do not invent generic reproducibility caveats. Only challenge a SPECIFIC claim that the paper itself overstates relative to the cited span.
+
 For each weak positive claim, determine if the evidence is actually direct, indirect, or overclaimed.
-Identify any additional gaps not previously captured.
+Identify any additional gaps not previously captured (subject to the discipline above).
 
 Return ONLY valid JSON:
 {
@@ -239,25 +279,32 @@ export async function runPaperPipeline(paperText: string, paperUrl: string | nul
   // Agent A: Extract structured evidence
   const extraction = await agentExtractEvidence(paperText);
 
-  // Agent B: Resolve accessions (deterministic + API calls, in parallel with nothing)
+  // Fetch live GitHub repo signals FIRST (prefer extracted repo URL, fall back to a
+  // GitHub paperUrl). This also surfaces accession IDs declared inside source code,
+  // which we then feed into resolution — so the review reflects the code, not just the PDF.
+  const repoUrl = extraction.codeRepoUrl ?? (paperUrl && paperUrl.includes("github.com") ? paperUrl : null);
+  const repoSignals = await fetchGithubRepoSignals(repoUrl);
+
+  // Agent B: Resolve accessions (deterministic + API calls)
+  const paperAccessions = extractAccessions(paperText);
   const allCandidateIds = [
     ...extraction.accessionCandidates,
-    ...extractAccessions(paperText).map(a => a.identifier),
+    ...paperAccessions.map(a => a.identifier),
+    ...(repoSignals?.accessions ?? []),
   ];
   // Deduplicate
   const uniqueIds = [...new Set(allCandidateIds)];
   const candidateObjects = uniqueIds.map(id => {
-    const found = extractAccessions(paperText).find(a => a.identifier === id);
-    return found ?? { identifier: id, repository: "Unknown", type: "unknown" };
+    const found = paperAccessions.find(a => a.identifier === id);
+    return found ?? { identifier: id, repository: "Unknown (from repo source)", type: "unknown" };
   });
 
-  // Run accession resolution + Agent C scoring in sequence (C needs B's results)
   const resolvedAccessions = await resolveAccessions(candidateObjects);
 
   // Agent D: Critic review (in parallel with Agent C)
   const [scores, criticResult] = await Promise.all([
-    agentScorePaper(paperText, extraction.evidenceItems, resolvedAccessions),
-    agentCriticReview(extraction.evidenceItems, resolvedAccessions),
+    agentScorePaper(paperText, extraction.evidenceItems, resolvedAccessions, repoSignals?.text ?? null),
+    agentCriticReview(extraction.evidenceItems, resolvedAccessions, repoSignals?.text ?? null),
   ]);
 
   // Merge critic findings into evidence items

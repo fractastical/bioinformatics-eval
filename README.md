@@ -188,11 +188,13 @@ A focused evaluation of fourteen publicly available insect colony and swarm simu
 ## Features
 
 - **Submit by URL or PDF upload** — paste a journal link or drag-and-drop a PDF
+- **Real PDF text extraction** — uploaded and URL-linked PDFs are parsed to text (via `unpdf`) and scored on their actual contents; if a PDF yields too little readable text (e.g. a scanned image), the evaluation is flagged as an error instead of scoring an empty document
 - **Multi-agent pipeline** — four Claude agents extract evidence, resolve dataset accessions, score dimensions, and audit weak claims
 - **Full report** — findings, gaps, and prioritised recommendations per paper
 - **Code analysis** — paste simulation code to trace each segment back to the data sources and citations it depends on
 - **Dashboard** — aggregate stats across all evaluated papers with score distribution and dimension breakdown
 - **PDF reports** — generate and email structured PDF reports for any subset of evaluations
+- **Hardened ingestion** — SSRF-guarded URL fetching (blocks private/loopback/link-local targets and re-validates every redirect hop), upload size/MIME/magic-byte checks, capped/timed downloads, locked CORS, request body limits, and rate limiting
 
 ---
 
@@ -202,7 +204,9 @@ A focused evaluation of fourteen publicly available insect colony and swarm simu
 - **API:** Express 5 + OpenAPI (contract-first, Orval codegen)
 - **DB:** PostgreSQL + Drizzle ORM
 - **AI:** Anthropic Claude via Replit AI Integrations
+- **PDF extraction:** `unpdf` (bundled pure-JS pdf.js — no native deps)
 - **Email:** Resend
+- **Security:** SSRF-guarded fetch, `express-rate-limit`, locked CORS, body-size limits
 - **Build:** pnpm workspaces, esbuild, Node.js 24, TypeScript 5.9
 
 ---

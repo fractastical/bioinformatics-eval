@@ -13,10 +13,12 @@ export default function Evaluations() {
   const { data: evaluations, isLoading } = useListEvaluations();
   const [search, setSearch] = useState("");
 
-  const filtered = evaluations?.filter(e => 
-    e.title?.toLowerCase().includes(search.toLowerCase()) || 
-    e.paperUrl?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = evaluations
+    ?.filter(e =>
+      e.title?.toLowerCase().includes(search.toLowerCase()) ||
+      e.paperUrl?.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => (b.overallScore ?? -1) - (a.overallScore ?? -1));
 
   return (
     <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-6" data-testid="evaluations-page">
