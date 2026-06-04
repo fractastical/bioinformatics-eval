@@ -31,6 +31,6 @@ Note: `/stats` deliberately exposes only a *subset* of dimension averages (not a
 ## Rubric versioning (durable decision)
 
 Every change to the dimension set, weights, or guideposts makes scores incomparable across runs, so each evaluation is stamped with the rubric that produced it.
-- Single source of truth: `RUBRIC_VERSION` const in `paperPipeline.ts` (currently `"3.0.0"`); it flows through `PipelineResult.rubricVersion` and is persisted to the nullable `rubric_version` column on completion (and nulled in `markEvalError`).
-- Semver convention: MAJOR = dimensions change, MINOR = weights change, PATCH = guidepost wording/calibration only. **Bump it whenever you touch the rubric** (it's a 6th touchpoint on top of the list above).
+- Single source of truth: `RUBRIC_VERSION` const in `paperPipeline.ts` (currently `"0.8.0"` — intentionally **pre-1.0** while the rubric is being validated by reviewers; do not start at a high version that implies false maturity); it flows through `PipelineResult.rubricVersion` and is persisted to the nullable `rubric_version` column on completion (and nulled in `markEvalError`).
+- Semver convention while pre-1.0: bump MINOR (`0.x.0`) for dimension/weight changes, PATCH (`0.8.x`) for guidepost wording/calibration only; promote to `1.0.0` once validated. **Bump it whenever you touch the rubric** (it's a 6th touchpoint on top of the list above).
 - `null` rubricVersion = scored before versioning existed ("unversioned"). We deliberately do NOT backfill historic rows with a guessed version — they get stamped only on rerun. UI shows "Rubric vX" or "Rubric: unversioned" on the completed detail page.

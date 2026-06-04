@@ -397,3 +397,74 @@ export const GetStatsResponse = zod.object({
 })
 
 
+/**
+ * @summary List all reviewer candidates
+ */
+export const ListReviewersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string().nullish(),
+  "affiliation": zod.string().nullish(),
+  "expertise": zod.string().nullish(),
+  "status": zod.enum(['not_contacted', 'contacted', 'responded', 'declined']),
+  "feedback": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional()
+})
+export const ListReviewersResponse = zod.array(ListReviewersResponseItem)
+
+
+/**
+ * @summary Add a reviewer candidate
+ */
+export const CreateReviewerBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string().optional(),
+  "affiliation": zod.string().optional(),
+  "expertise": zod.string().optional(),
+  "status": zod.enum(['not_contacted', 'contacted', 'responded', 'declined']).optional(),
+  "feedback": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a reviewer (status, feedback, details)
+ */
+export const UpdateReviewerParams = zod.object({
+  "reviewerId": zod.coerce.number()
+})
+
+export const UpdateReviewerBody = zod.object({
+  "name": zod.string().optional(),
+  "email": zod.string().optional(),
+  "affiliation": zod.string().optional(),
+  "expertise": zod.string().optional(),
+  "status": zod.enum(['not_contacted', 'contacted', 'responded', 'declined']).optional(),
+  "feedback": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+export const UpdateReviewerResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string().nullish(),
+  "affiliation": zod.string().nullish(),
+  "expertise": zod.string().nullish(),
+  "status": zod.enum(['not_contacted', 'contacted', 'responded', 'declined']),
+  "feedback": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a reviewer
+ */
+export const DeleteReviewerParams = zod.object({
+  "reviewerId": zod.coerce.number()
+})
+
+

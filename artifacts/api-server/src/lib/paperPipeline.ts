@@ -8,14 +8,17 @@ import { fetchGithubRepoSignals } from "./githubSignals";
 // Rubric version stamped onto every evaluation scored by this pipeline.
 // Bump when the dimension set, weights, or scoring guideposts change so that
 // scores produced under different rubrics remain distinguishable/comparable.
-// History:
-//   1.x — 4 dimensions (data source, dataset, reproducibility, citation)
-//   2.x — 6 dimensions (added simulation clarity + repro package quality)
-//   3.0.0 — 7 dimensions (added Information-Theoretic Rigor) + rebalanced weights
-//           (18/14/14/18/18/8/10)
-// Convention: bump MAJOR when dimensions change, MINOR when weights change,
-// PATCH when only guidepost wording/calibration changes.
-export const RUBRIC_VERSION = "3.0.0";
+//
+// The rubric is still PRE-1.0: it is actively being refined and validated against
+// expert/reviewer feedback, so we are not claiming a stable 1.0 contract yet. The
+// current iteration is the 7-dimension shape (added Information-Theoretic Rigor +
+// rebalanced weights to 18/14/14/18/18/8/10); the exact dimensions and weights are
+// still expected to move as we collect feedback.
+//
+// Convention while pre-1.0: bump MINOR (0.x.0) for dimension or weight changes,
+// PATCH (0.8.x) for guidepost wording/calibration only. Promote to 1.0.0 once the
+// rubric has been validated by reviewers and is considered stable.
+export const RUBRIC_VERSION = "0.8.0";
 
 export interface EvidenceItem {
   claim: string;

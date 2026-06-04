@@ -16,6 +16,8 @@ tags:
     description: Simulation code analysis operations
   - name: outreach
     description: Author outreach + feedback tracking operations
+  - name: reviewers
+    description: Global reviewer candidate list + feedback tracking operations
 paths:
   /healthz:
     get:
@@ -370,6 +372,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/EvaluationStats"
 
+  /reviewers:
+    get:
+      operationId: listReviewers
+      tags: [reviewers]
+      summary: List all reviewer candidates
+      responses:
+        "200":
+          description: List of reviewers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reviewer"
+    post:
+      operationId: createReviewer
+      tags: [reviewers]
+      summary: Add a reviewer candidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewerInput"
+      responses:
+        "201":
+          description: Reviewer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reviewer"
+        "400":
+          description: Bad request
+
+  /reviewers/{reviewerId}:
+    patch:
+      operationId: updateReviewer
+      tags: [reviewers]
+      summary: Update a reviewer (status, feedback, details)
+      parameters:
+        - name: reviewerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewerUpdate"
+      responses:
+        "200":
+          description: Reviewer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reviewer"
+        "400":
+          description: Invalid id or request body
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReviewer
+      tags: [reviewers]
+      summary: Delete a reviewer
+      parameters:
+        - name: reviewerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Invalid id
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -620,6 +702,72 @@ components:
         author:
           type: string
         body:
+          type: string
+
+    Reviewer:
+      type: object
+      required: [id, name, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        affiliation:
+          type: ["string", "null"]
+        expertise:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [not_contacted, contacted, responded, declined]
+        feedback:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ReviewerInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        affiliation:
+          type: string
+        expertise:
+          type: string
+        status:
+          type: string
+          enum: [not_contacted, contacted, responded, declined]
+        feedback:
+          type: string
+        notes:
+          type: string
+
+    ReviewerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        affiliation:
+          type: string
+        expertise:
+          type: string
+        status:
+          type: string
+          enum: [not_contacted, contacted, responded, declined]
+        feedback:
+          type: string
+        notes:
           type: string
 
     EvaluationStats:

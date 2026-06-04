@@ -8,6 +8,7 @@ import Evaluations from "@/pages/evaluations";
 import EvaluationDetail from "@/pages/evaluation-detail";
 import CodeAnalysisDetail from "@/pages/code-analysis";
 import Dashboard from "@/pages/dashboard";
+import Reviewers from "@/pages/reviewers";
 import Layout from "@/components/layout";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ function Router() {
         <Route path="/evaluations/:id" component={EvaluationDetail} />
         <Route path="/evaluations/:id/code/:analysisId" component={CodeAnalysisDetail} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/reviewers" component={Reviewers} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

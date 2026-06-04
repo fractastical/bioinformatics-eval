@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Activity, FlaskConical, LayoutDashboard, FileText, Database } from "lucide-react";
+import { Activity, FlaskConical, LayoutDashboard, FileText, Database, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -10,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", icon: Activity, label: "Submit Evaluation" },
     { href: "/evaluations", icon: FileText, label: "All Evaluations" },
     { href: "/dashboard", icon: LayoutDashboard, label: "Scores Dashboard" },
+    { href: "/reviewers", icon: Users, label: "Reviewers" },
   ];
 
   return (

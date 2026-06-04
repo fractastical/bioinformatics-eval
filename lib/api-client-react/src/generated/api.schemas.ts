@@ -226,6 +226,74 @@ export interface OutreachFeedbackInput {
   body: string;
 }
 
+export type ReviewerStatus = typeof ReviewerStatus[keyof typeof ReviewerStatus];
+
+
+export const ReviewerStatus = {
+  not_contacted: 'not_contacted',
+  contacted: 'contacted',
+  responded: 'responded',
+  declined: 'declined',
+} as const;
+
+export interface Reviewer {
+  id: number;
+  name: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  affiliation?: string | null;
+  /** @nullable */
+  expertise?: string | null;
+  status: ReviewerStatus;
+  /** @nullable */
+  feedback?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type ReviewerInputStatus = typeof ReviewerInputStatus[keyof typeof ReviewerInputStatus];
+
+
+export const ReviewerInputStatus = {
+  not_contacted: 'not_contacted',
+  contacted: 'contacted',
+  responded: 'responded',
+  declined: 'declined',
+} as const;
+
+export interface ReviewerInput {
+  name: string;
+  email?: string;
+  affiliation?: string;
+  expertise?: string;
+  status?: ReviewerInputStatus;
+  feedback?: string;
+  notes?: string;
+}
+
+export type ReviewerUpdateStatus = typeof ReviewerUpdateStatus[keyof typeof ReviewerUpdateStatus];
+
+
+export const ReviewerUpdateStatus = {
+  not_contacted: 'not_contacted',
+  contacted: 'contacted',
+  responded: 'responded',
+  declined: 'declined',
+} as const;
+
+export interface ReviewerUpdate {
+  name?: string;
+  email?: string;
+  affiliation?: string;
+  expertise?: string;
+  status?: ReviewerUpdateStatus;
+  feedback?: string;
+  notes?: string;
+}
+
 export type EvaluationStatsStatusBreakdown = {[key: string]: number};
 
 export interface EvaluationStats {
