@@ -14,6 +14,8 @@ tags:
     description: Paper evaluation operations
   - name: code-analysis
     description: Simulation code analysis operations
+  - name: outreach
+    description: Author outreach + feedback tracking operations
 paths:
   /healthz:
     get:
@@ -185,6 +187,176 @@ paths:
         "404":
           description: Not found
 
+  /evaluations/{id}/outreach:
+    get:
+      operationId: listOutreach
+      tags: [outreach]
+      summary: List outreach records (with feedback) for an evaluation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of outreach records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Outreach"
+        "400":
+          description: Invalid evaluation id
+    post:
+      operationId: createOutreach
+      tags: [outreach]
+      summary: Create an outreach record for an evaluation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutreachInput"
+      responses:
+        "201":
+          description: Outreach created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outreach"
+        "400":
+          description: Bad request
+        "404":
+          description: Evaluation not found
+
+  /evaluations/{id}/outreach/{outreachId}:
+    patch:
+      operationId: updateOutreach
+      tags: [outreach]
+      summary: Update an outreach record (status, contact, notes)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: outreachId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutreachUpdate"
+      responses:
+        "200":
+          description: Outreach updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outreach"
+        "400":
+          description: Invalid id or request body
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteOutreach
+      tags: [outreach]
+      summary: Delete an outreach record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: outreachId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Invalid id
+        "404":
+          description: Not found
+
+  /evaluations/{id}/outreach/{outreachId}/sync:
+    post:
+      operationId: syncOutreach
+      tags: [outreach]
+      summary: Pull the linked GitHub issue's state + comments into this outreach record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: outreachId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Outreach synced with latest GitHub state + feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outreach"
+        "400":
+          description: Invalid id or not a GitHub-linked outreach record
+        "404":
+          description: Not found
+        "502":
+          description: Failed to reach GitHub
+
+  /evaluations/{id}/outreach/{outreachId}/feedback:
+    post:
+      operationId: addOutreachFeedback
+      tags: [outreach]
+      summary: Manually record a response (e.g. an email or forum reply)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: outreachId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutreachFeedbackInput"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outreach"
+        "400":
+          description: Invalid id or request body
+        "404":
+          description: Not found
+
   /stats:
     get:
       operationId: getStats
@@ -229,24 +401,30 @@ components:
           enum: [pending, analyzing, complete, error]
         overallScore:
           type: ["number", "null"]
-        # Dim 1: Data Disclosure (20pt rubric)
+        # Dim 1: Data Disclosure (18pt rubric)
         dataSourceScore:
           type: ["number", "null"]
-        # Dim 2: Dataset Resolvability (15pt rubric)
+        # Dim 2: Dataset Resolvability (14pt rubric)
         datasetScore:
           type: ["number", "null"]
-        # Dim 3: Code Availability & Versioning (15pt rubric)
+        # Dim 3: Code Availability & Versioning (14pt rubric)
         reproducibilityScore:
           type: ["number", "null"]
-        # Dim 4: Code-to-Data Traceability (20pt rubric)
+        # Dim 4: Code-to-Data Traceability (18pt rubric)
         citationScore:
           type: ["number", "null"]
-        # Dim 5: Simulation Derivation Clarity (20pt rubric)
+        # Dim 5: Simulation Derivation Clarity (18pt rubric)
         simulationClarityScore:
           type: ["number", "null"]
-        # Dim 6: Reproducibility Package Quality (10pt rubric)
+        # Dim 6: Reproducibility Package Quality (8pt rubric)
         reproPackageScore:
           type: ["number", "null"]
+        # Dim 7: Information-Theoretic Rigor (10pt rubric)
+        informationTheoryScore:
+          type: ["number", "null"]
+        # Rubric version that produced these scores (null = pre-versioning)
+        rubricVersion:
+          type: ["string", "null"]
         summary:
           type: ["string", "null"]
         dataSourcesFound:
@@ -331,6 +509,117 @@ components:
         codeSnippet:
           type: string
         language:
+          type: string
+
+    OutreachFeedback:
+      type: object
+      required:
+        - id
+        - outreachId
+        - source
+        - body
+        - createdAt
+      properties:
+        id:
+          type: integer
+        outreachId:
+          type: integer
+        source:
+          type: string
+          enum: [github, manual]
+        author:
+          type: ["string", "null"]
+        body:
+          type: string
+        externalUrl:
+          type: ["string", "null"]
+        externalCreatedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    Outreach:
+      type: object
+      required:
+        - id
+        - evaluationId
+        - channel
+        - status
+        - createdAt
+        - feedback
+      properties:
+        id:
+          type: integer
+        evaluationId:
+          type: integer
+        channel:
+          type: string
+          enum: [github, email, forum, other]
+        contact:
+          type: ["string", "null"]
+        githubOwner:
+          type: ["string", "null"]
+        githubRepo:
+          type: ["string", "null"]
+        githubIssueNumber:
+          type: ["integer", "null"]
+        githubUrl:
+          type: ["string", "null"]
+        githubState:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, contacted, responded, closed]
+        notes:
+          type: ["string", "null"]
+        lastSyncedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        feedback:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutreachFeedback"
+
+    OutreachInput:
+      type: object
+      required:
+        - channel
+      properties:
+        channel:
+          type: string
+          enum: [github, email, forum, other]
+        contact:
+          type: string
+        githubUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, contacted, responded, closed]
+        notes:
+          type: string
+
+    OutreachUpdate:
+      type: object
+      properties:
+        contact:
+          type: string
+        status:
+          type: string
+          enum: [pending, contacted, responded, closed]
+        notes:
+          type: string
+
+    OutreachFeedbackInput:
+      type: object
+      required:
+        - body
+      properties:
+        author:
+          type: string
+        body:
           type: string
 
     EvaluationStats:

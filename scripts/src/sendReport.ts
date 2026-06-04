@@ -2,10 +2,11 @@ import PDFDocument from "pdfkit";
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 
 const API_BASE = "http://localhost:80";
 
-interface Evaluation {
+export interface Evaluation {
   id: number;
   title: string;
   paperUrl: string;
@@ -23,7 +24,7 @@ interface Evaluation {
   createdAt: string;
 }
 
-async function fetchEval(id: number): Promise<Evaluation> {
+export async function fetchEval(id: number): Promise<Evaluation> {
   const r = await fetch(`${API_BASE}/api/evaluations/${id}`);
   return r.json() as Promise<Evaluation>;
 }
@@ -142,7 +143,7 @@ function addEvalSection(doc: PDFKit.PDFDocument, ev: Evaluation): void {
   doc.moveDown(1.2);
 }
 
-async function buildPDF(evals: Evaluation[]): Promise<Buffer> {
+export async function buildPDF(evals: Evaluation[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: "A4", bufferPages: true });
     const chunks: Buffer[] = [];
@@ -242,7 +243,7 @@ async function buildPDF(evals: Evaluation[]): Promise<Buffer> {
   });
 }
 
-async function sendEmail(pdfBuffer: Buffer, evals: Evaluation[]): Promise<void> {
+export async function sendEmail(pdfBuffer: Buffer, evals: Evaluation[]): Promise<void> {
   const connectors = new ReplitConnectors();
   const b64 = pdfBuffer.toString("base64");
 
@@ -317,7 +318,10 @@ async function main() {
   await sendEmail(pdfBuffer, evals);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

@@ -6,6 +6,8 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "send-report": "tsx ./src/sendReport.ts",
+    "regen-report": "tsx ./src/regenReport.ts",
+    "email-report": "tsx ./src/regenReport.ts --email",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

@@ -207,7 +207,7 @@ function deriveStatus(
 
 // GET /evaluations/:id/code-analyses
 router.get("/", async (req, res) => {
-  const evalId = Number(req.params.id);
+  const evalId = Number((req.params as Record<string, string>).id);
   if (isNaN(evalId)) { res.status(400).json({ error: "Invalid evaluation id" }); return; }
   const rows = await db
     .select().from(codeAnalysesTable)
@@ -218,7 +218,7 @@ router.get("/", async (req, res) => {
 
 // POST /evaluations/:id/code-analyses
 router.post("/", async (req, res) => {
-  const evalId = Number(req.params.id);
+  const evalId = Number((req.params as Record<string, string>).id);
   if (isNaN(evalId)) { res.status(400).json({ error: "Invalid evaluation id" }); return; }
 
   const schema = z.object({
@@ -262,8 +262,8 @@ router.post("/", async (req, res) => {
 
 // GET /evaluations/:id/code-analyses/:analysisId
 router.get("/:analysisId", async (req, res) => {
-  const evalId = Number(req.params.id);
-  const analysisId = Number(req.params.analysisId);
+  const evalId = Number((req.params as Record<string, string>).id);
+  const analysisId = Number((req.params as Record<string, string>).analysisId);
   if (isNaN(evalId) || isNaN(analysisId)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const [row] = await db

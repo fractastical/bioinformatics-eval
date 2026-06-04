@@ -2,3 +2,7 @@
 - [Scoring granularity](scoring-granularity.md) — LLM rubric scores snap to discrete tiers; feed real per-item external signals (e.g. live GitHub repo facts) to differentiate.
 - [DOI resolution & evidence discipline](doi-and-evidence-discipline.md) — query Crossref AND DataCite; chunk+backoff resolver calls; give EVERY finding-emitting agent the same "no unverified-gap" rules; scan repo source not just PDF.
 - [SSRF, PDF & async-failure hardening](api-fetch-and-ssrf-hardening.md) — re-validate every redirect hop; full IPv6 parsing for private ranges; cap+timeout downloads; async routes 201 then persist status:"error"; null scores on failure.
+- [GitHub push via Git Data API](github-data-api-push.md) — local/remote histories diverged; push by parenting a commit on remote HEAD (no force); verify via contents API, not raw CDN.
+- [Insect Series +20 calibration](insect-series-score-calibration.md) — published scores carry a documented +20 baseline (cap 100); keep README tables, key findings, and GitHub issues all consistent.
+- [Outreach GitHub-sync design](outreach-sync-design.md) — re-syncable external pulls need DB-level dedupe (unique index + onConflictDoNothing) and monotonic status (never regress on sync).
+- [Rubric dimensions](rubric-dimensions.md) — weighted 0-100 dims summing to 1.0; keep content-rigor (info-theory) orthogonal to transparency, non-applicable→~50 not 0; full touchpoint checklist for adding a dim.

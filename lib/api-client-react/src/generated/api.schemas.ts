@@ -42,6 +42,10 @@ export interface Evaluation {
   /** @nullable */
   reproPackageScore?: number | null;
   /** @nullable */
+  informationTheoryScore?: number | null;
+  /** @nullable */
+  rubricVersion?: string | null;
+  /** @nullable */
   summary?: string | null;
   /** @nullable */
   dataSourcesFound?: number | null;
@@ -103,6 +107,123 @@ export interface CodeAnalysisInput {
   title?: string;
   codeSnippet: string;
   language?: string;
+}
+
+export type OutreachFeedbackSource = typeof OutreachFeedbackSource[keyof typeof OutreachFeedbackSource];
+
+
+export const OutreachFeedbackSource = {
+  github: 'github',
+  manual: 'manual',
+} as const;
+
+export interface OutreachFeedback {
+  id: number;
+  outreachId: number;
+  source: OutreachFeedbackSource;
+  /** @nullable */
+  author?: string | null;
+  body: string;
+  /** @nullable */
+  externalUrl?: string | null;
+  /** @nullable */
+  externalCreatedAt?: string | null;
+  createdAt: string;
+}
+
+export type OutreachChannel = typeof OutreachChannel[keyof typeof OutreachChannel];
+
+
+export const OutreachChannel = {
+  github: 'github',
+  email: 'email',
+  forum: 'forum',
+  other: 'other',
+} as const;
+
+export type OutreachStatus = typeof OutreachStatus[keyof typeof OutreachStatus];
+
+
+export const OutreachStatus = {
+  pending: 'pending',
+  contacted: 'contacted',
+  responded: 'responded',
+  closed: 'closed',
+} as const;
+
+export interface Outreach {
+  id: number;
+  evaluationId: number;
+  channel: OutreachChannel;
+  /** @nullable */
+  contact?: string | null;
+  /** @nullable */
+  githubOwner?: string | null;
+  /** @nullable */
+  githubRepo?: string | null;
+  /** @nullable */
+  githubIssueNumber?: number | null;
+  /** @nullable */
+  githubUrl?: string | null;
+  /** @nullable */
+  githubState?: string | null;
+  status: OutreachStatus;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  lastSyncedAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  feedback: OutreachFeedback[];
+}
+
+export type OutreachInputChannel = typeof OutreachInputChannel[keyof typeof OutreachInputChannel];
+
+
+export const OutreachInputChannel = {
+  github: 'github',
+  email: 'email',
+  forum: 'forum',
+  other: 'other',
+} as const;
+
+export type OutreachInputStatus = typeof OutreachInputStatus[keyof typeof OutreachInputStatus];
+
+
+export const OutreachInputStatus = {
+  pending: 'pending',
+  contacted: 'contacted',
+  responded: 'responded',
+  closed: 'closed',
+} as const;
+
+export interface OutreachInput {
+  channel: OutreachInputChannel;
+  contact?: string;
+  githubUrl?: string;
+  status?: OutreachInputStatus;
+  notes?: string;
+}
+
+export type OutreachUpdateStatus = typeof OutreachUpdateStatus[keyof typeof OutreachUpdateStatus];
+
+
+export const OutreachUpdateStatus = {
+  pending: 'pending',
+  contacted: 'contacted',
+  responded: 'responded',
+  closed: 'closed',
+} as const;
+
+export interface OutreachUpdate {
+  contact?: string;
+  status?: OutreachUpdateStatus;
+  notes?: string;
+}
+
+export interface OutreachFeedbackInput {
+  author?: string;
+  body: string;
 }
 
 export type EvaluationStatsStatusBreakdown = {[key: string]: number};

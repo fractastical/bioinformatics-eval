@@ -224,6 +224,8 @@ export default function Home() {
                       {renderMiniScore(evaluation.simulationClarityScore, "Sim. Clarity")}
                       {/* @ts-ignore */}
                       {renderMiniScore(evaluation.reproPackageScore, "Repro Pack.")}
+                      {/* @ts-ignore */}
+                      {renderMiniScore(evaluation.informationTheoryScore, "Info-Theoretic")}
                     </div>
                     <p className="text-xs text-muted-foreground font-mono truncate">
                       {evaluation.paperUrl || evaluation.pdfFilename || "No source available"}

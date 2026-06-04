@@ -5,6 +5,18 @@ import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { extractAccessions, resolveAccessions, type ResolvedAccession } from "./accessionResolver";
 import { fetchGithubRepoSignals } from "./githubSignals";
 
+// Rubric version stamped onto every evaluation scored by this pipeline.
+// Bump when the dimension set, weights, or scoring guideposts change so that
+// scores produced under different rubrics remain distinguishable/comparable.
+// History:
+//   1.x — 4 dimensions (data source, dataset, reproducibility, citation)
+//   2.x — 6 dimensions (added simulation clarity + repro package quality)
+//   3.0.0 — 7 dimensions (added Information-Theoretic Rigor) + rebalanced weights
+//           (18/14/14/18/18/8/10)
+// Convention: bump MAJOR when dimensions change, MINOR when weights change,
+// PATCH when only guidepost wording/calibration changes.
+export const RUBRIC_VERSION = "3.0.0";
+
 export interface EvidenceItem {
   claim: string;
   evidenceType: "positive" | "missing" | "partial";
@@ -29,6 +41,7 @@ export interface PaperScores {
   citationScore: number;
   simulationClarityScore: number;
   reproPackageScore: number;
+  informationTheoryScore: number;
   summary: string;
   dataSourcesFound: number;
   datasetsFound: number;
@@ -43,6 +56,7 @@ export interface PipelineResult {
   accessions: ResolvedAccession[];
   evidenceItems: EvidenceItem[];
   codeRepoUrl: string | null;
+  rubricVersion: string;
 }
 
 function parseJSON<T>(text: string): T {
@@ -151,7 +165,7 @@ EVIDENCE DISCIPLINE (avoid infohazards — false negatives erode trust):
 WHAT 100% LOOKS LIKE (calibration anchor):
 - A 100% package: every dataset listed with a resolvable accession/DOI + version + access method; all identifiers resolve with metadata matching the paper; code public + versioned (tagged release or pinned commit) + archived with a DOI + license + dependency manifest with pinned versions + tests + CI; every data-loading step and parameter value traceable to a cited source; a one-command reproducible environment with example data and checksums. Deduct from 100 ONLY for specific, verified missing elements — and say which element is missing.
 
-Score the paper on these 6 dimensions. Each score is a CONTINUOUS integer 0-100.
+Score the paper on these 7 dimensions. Each score is a CONTINUOUS integer 0-100.
 
 CRITICAL SCORING INSTRUCTIONS:
 - The numbered levels below are GUIDEPOSTS, not the only allowed values. Do NOT snap to them.
@@ -160,22 +174,24 @@ CRITICAL SCORING INSTRUCTIONS:
 - Differentiate aggressively: if two papers feel similar, find the concrete factors (README depth, license, commit pinning, parameter sourcing, dependency manifests, seeds, test data) that separate them and let the scores reflect that.
 
 RUBRIC GUIDEPOSTS:
-1. dataSourceScore [Data Disclosure, 20pts]: 100=all datasets listed with repo+accession+version+access+role; 75=most listed but some versions unclear; 50=Data Availability Statement exists but vague; 25=mentions data in prose only; 0=no disclosure. For simulation papers with no external datasets, score how completely the GENERATIVE inputs (rules, parameters, initial conditions, config files) are disclosed instead of penalizing for absent accessions.
-2. datasetScore [Dataset Resolvability, 15pts]: 100=all identifiers resolve and metadata match paper; 67=most resolve with minor mismatches; 33=some resolve but key datasets inaccessible; 0=identifiers missing/broken/private. IMPORTANT: For rule-based/agent simulations that legitimately use NO external datasets, do not floor this at 0 for lacking accessions — instead judge resolvability of the synthetic-data definition: are the generative rules, parameter tables, and config fully specified and reconstructable (high) vs. described only in prose (low)?
-3. reproducibilityScore [Code Availability & Versioning, 15pts]: 100=code public+versioned+archived (DOI/Zenodo)+documented; 67=code public but no release/commit/archive; 33=code exists but incomplete or stale; 0=no code or private. Interpolate within "public" based on: pinned commit/tag, license present, README depth, dependency manifest (requirements/package.json/Cargo.toml), tests/CI, issue activity. A bare public repo with no README ≈ 45-55; a public repo with pinned deps + thorough README + license but no archive ≈ 78-85.
-4. citationScore [Code-to-Data Traceability, 20pts]: 100=every data-loading/input step maps to declared sources; 75=main paths traceable, minor gaps; 50=some traceability but important preprocessing unexplained; 25=code loads undeclared files; 0=cannot connect code to inputs
-5. simulationClarityScore [Simulation Derivation Clarity, 20pts]: 100=every parameter, distribution, seed traceable; 75=main parameters traceable, some constants unclear; 50=some parameters explained, calibration incomplete; 25=many hard-coded unexplained values; 0=simulation behavior untraceable
-6. reproPackageScore [Reproducibility Package Quality, 10pts]: 100=environment+workflow+test data+instructions+checksums present; 70=mostly runnable with minor gaps; 40=significant manual reconstruction required; 0=not practically runnable
+1. dataSourceScore [Data Disclosure, 18pts]: 100=all datasets listed with repo+accession+version+access+role; 75=most listed but some versions unclear; 50=Data Availability Statement exists but vague; 25=mentions data in prose only; 0=no disclosure. For simulation papers with no external datasets, score how completely the GENERATIVE inputs (rules, parameters, initial conditions, config files) are disclosed instead of penalizing for absent accessions.
+2. datasetScore [Dataset Resolvability, 14pts]: 100=all identifiers resolve and metadata match paper; 67=most resolve with minor mismatches; 33=some resolve but key datasets inaccessible; 0=identifiers missing/broken/private. IMPORTANT: For rule-based/agent simulations that legitimately use NO external datasets, do not floor this at 0 for lacking accessions — instead judge resolvability of the synthetic-data definition: are the generative rules, parameter tables, and config fully specified and reconstructable (high) vs. described only in prose (low)?
+3. reproducibilityScore [Code Availability & Versioning, 14pts]: 100=code public+versioned+archived (DOI/Zenodo)+documented; 67=code public but no release/commit/archive; 33=code exists but incomplete or stale; 0=no code or private. Interpolate within "public" based on: pinned commit/tag, license present, README depth, dependency manifest (requirements/package.json/Cargo.toml), tests/CI, issue activity. A bare public repo with no README ≈ 45-55; a public repo with pinned deps + thorough README + license but no archive ≈ 78-85.
+4. citationScore [Code-to-Data Traceability, 18pts]: 100=every data-loading/input step maps to declared sources; 75=main paths traceable, minor gaps; 50=some traceability but important preprocessing unexplained; 25=code loads undeclared files; 0=cannot connect code to inputs
+5. simulationClarityScore [Simulation Derivation Clarity, 18pts]: 100=every parameter, distribution, seed traceable; 75=main parameters traceable, some constants unclear; 50=some parameters explained, calibration incomplete; 25=many hard-coded unexplained values; 0=simulation behavior untraceable
+6. reproPackageScore [Reproducibility Package Quality, 8pts]: 100=environment+workflow+test data+instructions+checksums present; 70=mostly runnable with minor gaps; 40=significant manual reconstruction required; 0=not practically runnable
+7. informationTheoryScore [Information-Theoretic Rigor, 10pts]: How rigorously does the paper FORMALIZE AND QUANTIFY the information content of the system it models? This measures scientific-content rigor, NOT transparency — score it independently of data/code availability. Many of these papers model communication/coordination systems (ant/ACO pheromone stigmergy, bee waggle-dance signaling, firefly/Kuramoto synchronization, termite stigmergic construction, flocking/swarming) where information flow IS the phenomenon. Guideposts: 100=defines and quantifies the relevant information-theoretic measures with derivations or measurements — e.g. Shannon entropy of agent state/signal distributions, mutual information or transfer entropy between agents (directed information flow), channel capacity / communication bit rate of the signaling mechanism (bits per pheromone deposit, bits per dance, bits/sec), and how these scale with colony/population size or signal-to-noise; 75=quantifies at least one such measure rigorously but leaves others informal; 50=discusses information flow / communication capacity conceptually but never quantifies it; 25=communication or coordination is central yet treated purely mechanistically with no information-theoretic framing where it would clearly apply; 0=no information-theoretic content and the system does not plausibly call for it. IMPORTANT CALIBRATION: do NOT penalize a paper whose subject genuinely has no information-theoretic dimension (e.g. a pure phylogenetics or sequence-alignment pipeline) — for those, this dimension is not applicable and should be scored at a neutral midpoint (≈50) rather than 0, so a non-applicable topic neither rewards nor punishes. Reserve low scores for papers where information/communication is clearly central but left unquantified, and high scores for papers that actually do the information-theoretic math.
 
 Return ONLY a valid JSON object:
 {
-  "overallScore": <weighted average: dim1*0.20 + dim2*0.15 + dim3*0.15 + dim4*0.20 + dim5*0.20 + dim6*0.10>,
+  "overallScore": <weighted average: dim1*0.18 + dim2*0.14 + dim3*0.14 + dim4*0.18 + dim5*0.18 + dim6*0.08 + dim7*0.10>,
   "dataSourceScore": <0-100>,
   "datasetScore": <0-100>,
   "reproducibilityScore": <0-100>,
   "citationScore": <0-100>,
   "simulationClarityScore": <0-100>,
   "reproPackageScore": <0-100>,
+  "informationTheoryScore": <0-100>,
   "summary": "<3-4 sentence overall assessment referencing specific evidence>",
   "dataSourcesFound": <integer>,
   "datasetsFound": <integer>,
@@ -324,5 +340,6 @@ export async function runPaperPipeline(paperText: string, paperUrl: string | nul
     accessions: resolvedAccessions,
     evidenceItems: mergedEvidenceItems,
     codeRepoUrl: extraction.codeRepoUrl,
+    rubricVersion: RUBRIC_VERSION,
   };
 }

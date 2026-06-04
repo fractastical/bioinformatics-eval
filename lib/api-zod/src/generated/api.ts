@@ -32,6 +32,8 @@ export const ListEvaluationsResponseItem = zod.object({
   "citationScore": zod.number().nullish(),
   "simulationClarityScore": zod.number().nullish(),
   "reproPackageScore": zod.number().nullish(),
+  "informationTheoryScore": zod.number().nullish(),
+  "rubricVersion": zod.string().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -77,6 +79,8 @@ export const GetEvaluationResponse = zod.object({
   "citationScore": zod.number().nullish(),
   "simulationClarityScore": zod.number().nullish(),
   "reproPackageScore": zod.number().nullish(),
+  "informationTheoryScore": zod.number().nullish(),
+  "rubricVersion": zod.string().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -120,6 +124,8 @@ export const RerunEvaluationResponse = zod.object({
   "citationScore": zod.number().nullish(),
   "simulationClarityScore": zod.number().nullish(),
   "reproPackageScore": zod.number().nullish(),
+  "informationTheoryScore": zod.number().nullish(),
+  "rubricVersion": zod.string().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),
@@ -198,6 +204,159 @@ export const GetCodeAnalysisResponse = zod.object({
 
 
 /**
+ * @summary List outreach records (with feedback) for an evaluation
+ */
+export const ListOutreachParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListOutreachResponseItem = zod.object({
+  "id": zod.number(),
+  "evaluationId": zod.number(),
+  "channel": zod.enum(['github', 'email', 'forum', 'other']),
+  "contact": zod.string().nullish(),
+  "githubOwner": zod.string().nullish(),
+  "githubRepo": zod.string().nullish(),
+  "githubIssueNumber": zod.number().nullish(),
+  "githubUrl": zod.string().nullish(),
+  "githubState": zod.string().nullish(),
+  "status": zod.enum(['pending', 'contacted', 'responded', 'closed']),
+  "notes": zod.string().nullish(),
+  "lastSyncedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional(),
+  "feedback": zod.array(zod.object({
+  "id": zod.number(),
+  "outreachId": zod.number(),
+  "source": zod.enum(['github', 'manual']),
+  "author": zod.string().nullish(),
+  "body": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "externalCreatedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+export const ListOutreachResponse = zod.array(ListOutreachResponseItem)
+
+
+/**
+ * @summary Create an outreach record for an evaluation
+ */
+export const CreateOutreachParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateOutreachBody = zod.object({
+  "channel": zod.enum(['github', 'email', 'forum', 'other']),
+  "contact": zod.string().optional(),
+  "githubUrl": zod.string().optional(),
+  "status": zod.enum(['pending', 'contacted', 'responded', 'closed']).optional(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Update an outreach record (status, contact, notes)
+ */
+export const UpdateOutreachParams = zod.object({
+  "id": zod.coerce.number(),
+  "outreachId": zod.coerce.number()
+})
+
+export const UpdateOutreachBody = zod.object({
+  "contact": zod.string().optional(),
+  "status": zod.enum(['pending', 'contacted', 'responded', 'closed']).optional(),
+  "notes": zod.string().optional()
+})
+
+export const UpdateOutreachResponse = zod.object({
+  "id": zod.number(),
+  "evaluationId": zod.number(),
+  "channel": zod.enum(['github', 'email', 'forum', 'other']),
+  "contact": zod.string().nullish(),
+  "githubOwner": zod.string().nullish(),
+  "githubRepo": zod.string().nullish(),
+  "githubIssueNumber": zod.number().nullish(),
+  "githubUrl": zod.string().nullish(),
+  "githubState": zod.string().nullish(),
+  "status": zod.enum(['pending', 'contacted', 'responded', 'closed']),
+  "notes": zod.string().nullish(),
+  "lastSyncedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional(),
+  "feedback": zod.array(zod.object({
+  "id": zod.number(),
+  "outreachId": zod.number(),
+  "source": zod.enum(['github', 'manual']),
+  "author": zod.string().nullish(),
+  "body": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "externalCreatedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Delete an outreach record
+ */
+export const DeleteOutreachParams = zod.object({
+  "id": zod.coerce.number(),
+  "outreachId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Pull the linked GitHub issue's state + comments into this outreach record
+ */
+export const SyncOutreachParams = zod.object({
+  "id": zod.coerce.number(),
+  "outreachId": zod.coerce.number()
+})
+
+export const SyncOutreachResponse = zod.object({
+  "id": zod.number(),
+  "evaluationId": zod.number(),
+  "channel": zod.enum(['github', 'email', 'forum', 'other']),
+  "contact": zod.string().nullish(),
+  "githubOwner": zod.string().nullish(),
+  "githubRepo": zod.string().nullish(),
+  "githubIssueNumber": zod.number().nullish(),
+  "githubUrl": zod.string().nullish(),
+  "githubState": zod.string().nullish(),
+  "status": zod.enum(['pending', 'contacted', 'responded', 'closed']),
+  "notes": zod.string().nullish(),
+  "lastSyncedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional(),
+  "feedback": zod.array(zod.object({
+  "id": zod.number(),
+  "outreachId": zod.number(),
+  "source": zod.enum(['github', 'manual']),
+  "author": zod.string().nullish(),
+  "body": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "externalCreatedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Manually record a response (e.g. an email or forum reply)
+ */
+export const AddOutreachFeedbackParams = zod.object({
+  "id": zod.coerce.number(),
+  "outreachId": zod.coerce.number()
+})
+
+export const AddOutreachFeedbackBody = zod.object({
+  "author": zod.string().optional(),
+  "body": zod.string()
+})
+
+
+/**
  * @summary Get aggregate statistics across all evaluations
  */
 export const GetStatsResponse = zod.object({
@@ -220,6 +379,8 @@ export const GetStatsResponse = zod.object({
   "citationScore": zod.number().nullish(),
   "simulationClarityScore": zod.number().nullish(),
   "reproPackageScore": zod.number().nullish(),
+  "informationTheoryScore": zod.number().nullish(),
+  "rubricVersion": zod.string().nullish(),
   "summary": zod.string().nullish(),
   "dataSourcesFound": zod.number().nullish(),
   "datasetsFound": zod.number().nullish(),

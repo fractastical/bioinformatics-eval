@@ -10,20 +10,26 @@ export const evaluationsTable = pgTable("evaluations", {
   extractedText: text("extracted_text"),
   status: text("status").notNull().default("pending"), // pending | analyzing | complete | error
 
-  // 6-dimension rubric scores (0-100 normalized)
+  // 7-dimension rubric scores (0-100 normalized)
   overallScore: real("overall_score"),
-  // Dim 1: Data Disclosure (20 pts rubric → 0-100)
+  // Dim 1: Data Disclosure (18 pts rubric → 0-100)
   dataSourceScore: real("data_source_score"),
-  // Dim 2: Dataset Resolvability (15 pts rubric → 0-100)
+  // Dim 2: Dataset Resolvability (14 pts rubric → 0-100)
   datasetScore: real("dataset_score"),
-  // Dim 3: Code Availability & Versioning (15 pts rubric → 0-100)
+  // Dim 3: Code Availability & Versioning (14 pts rubric → 0-100)
   reproducibilityScore: real("reproducibility_score"),
-  // Dim 4: Code-to-Data Traceability (20 pts rubric → 0-100)
+  // Dim 4: Code-to-Data Traceability (18 pts rubric → 0-100)
   citationScore: real("citation_score"),
-  // Dim 5: Simulation Derivation Clarity (20 pts rubric → 0-100)
+  // Dim 5: Simulation Derivation Clarity (18 pts rubric → 0-100)
   simulationClarityScore: real("simulation_clarity_score"),
-  // Dim 6: Reproducibility Package Quality (10 pts rubric → 0-100)
+  // Dim 6: Reproducibility Package Quality (8 pts rubric → 0-100)
   reproPackageScore: real("repro_package_score"),
+  // Dim 7: Information-Theoretic Rigor (10 pts rubric → 0-100)
+  informationTheoryScore: real("information_theory_score"),
+
+  // Rubric version that produced the scores above (e.g. "3.0.0").
+  // Null = scored before rubric versioning was introduced (rubric unknown).
+  rubricVersion: text("rubric_version"),
 
   summary: text("summary"),
   dataSourcesFound: integer("data_sources_found"),

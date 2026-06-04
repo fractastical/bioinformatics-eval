@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Activity, RefreshCw, FileCode2, ChevronRight, ExternalLink, Database, SearchX, CheckCircle, ShieldAlert, AlertCircle, Quote } from "lucide-react";
+import { Activity, RefreshCw, FileCode2, ChevronRight, ExternalLink, Database, SearchX, CheckCircle, ShieldAlert, AlertCircle, Quote, Megaphone } from "lucide-react";
 import { format } from "date-fns";
+import OutreachTab from "@/components/outreach-tab";
 
 export interface ResolvedAccession {
   identifier: string;
@@ -163,6 +164,11 @@ export default function EvaluationDetail() {
             <span className="text-sm text-muted-foreground">
               Evaluated {format(new Date(evaluation.createdAt), "MMM d, yyyy")}
             </span>
+            {evaluation.status === 'complete' && (
+              <Badge variant="outline" className="text-xs font-normal text-muted-foreground" data-testid="rubric-version">
+                {evaluation.rubricVersion ? `Rubric v${evaluation.rubricVersion}` : "Rubric: unversioned"}
+              </Badge>
+            )}
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-2" data-testid="eval-title">{evaluation.title || "Untitled Paper"}</h1>
           {evaluation.paperUrl && (
@@ -210,16 +216,18 @@ export default function EvaluationDetail() {
                 <CardTitle className="text-lg">Evaluation Dimensions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <DimensionBar score={evaluation.dataSourceScore} label="Data Disclosure" weight="20%" />
+                <DimensionBar score={evaluation.dataSourceScore} label="Data Disclosure" weight="18%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.datasetScore} label="Dataset Resolvability" weight="15%" />
-                <DimensionBar score={evaluation.reproducibilityScore} label="Code Availability" weight="15%" />
+                <DimensionBar score={evaluation.datasetScore} label="Dataset Resolvability" weight="14%" />
+                <DimensionBar score={evaluation.reproducibilityScore} label="Code Availability" weight="14%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.citationScore} label="Traceability" weight="20%" />
+                <DimensionBar score={evaluation.citationScore} label="Traceability" weight="18%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.simulationClarityScore} label="Simulation Clarity" weight="20%" />
+                <DimensionBar score={evaluation.simulationClarityScore} label="Simulation Clarity" weight="18%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.reproPackageScore} label="Repro Package Quality" weight="10%" />
+                <DimensionBar score={evaluation.reproPackageScore} label="Repro Package Quality" weight="8%" />
+                {/* @ts-ignore */}
+                <DimensionBar score={evaluation.informationTheoryScore} label="Information-Theoretic Rigor" weight="10%" />
               </CardContent>
             </Card>
           </div>
@@ -230,6 +238,9 @@ export default function EvaluationDetail() {
               <TabsTrigger value="datasets" data-testid="tab-datasets">Datasets ({accessions.length})</TabsTrigger>
               <TabsTrigger value="evidence" data-testid="tab-evidence">Evidence Items</TabsTrigger>
               <TabsTrigger value="code" data-testid="tab-code">Code Analysis</TabsTrigger>
+              <TabsTrigger value="outreach" data-testid="tab-outreach">
+                <Megaphone className="w-3.5 h-3.5 mr-1.5" /> Outreach
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="report" className="space-y-6" data-testid="content-report">
@@ -518,6 +529,10 @@ export default function EvaluationDetail() {
                   </Card>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="outreach" data-testid="content-outreach-tab">
+              <OutreachTab evalId={evalId} />
             </TabsContent>
           </Tabs>
         </>

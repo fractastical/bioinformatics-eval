@@ -30,6 +30,10 @@ export interface Evaluation {
   /** @nullable */
   reproPackageScore?: number | null;
   /** @nullable */
+  informationTheoryScore?: number | null;
+  /** @nullable */
+  rubricVersion?: string | null;
+  /** @nullable */
   summary?: string | null;
   /** @nullable */
   dataSourcesFound?: number | null;

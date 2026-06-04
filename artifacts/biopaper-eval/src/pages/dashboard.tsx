@@ -13,12 +13,13 @@ import { ChevronRight, TrendingUp, Award, AlertTriangle, CheckCircle2 } from "lu
 import { format } from "date-fns";
 
 const DIMENSIONS = [
-  { key: "dataSourceScore",        label: "Data Disclosure",     weight: "20%", short: "Data" },
-  { key: "datasetScore",           label: "Dataset Resolvability", weight: "15%", short: "Dataset" },
-  { key: "reproducibilityScore",   label: "Code Availability",   weight: "15%", short: "Code" },
-  { key: "citationScore",          label: "Traceability",        weight: "20%", short: "Trace" },
-  { key: "simulationClarityScore", label: "Sim. Clarity",        weight: "20%", short: "Sim" },
-  { key: "reproPackageScore",      label: "Repro Package",       weight: "10%", short: "Repro" },
+  { key: "dataSourceScore",        label: "Data Disclosure",     weight: "18%", short: "Data" },
+  { key: "datasetScore",           label: "Dataset Resolvability", weight: "14%", short: "Dataset" },
+  { key: "reproducibilityScore",   label: "Code Availability",   weight: "14%", short: "Code" },
+  { key: "citationScore",          label: "Traceability",        weight: "18%", short: "Trace" },
+  { key: "simulationClarityScore", label: "Sim. Clarity",        weight: "18%", short: "Sim" },
+  { key: "reproPackageScore",      label: "Repro Package",       weight: "8%", short: "Repro" },
+  { key: "informationTheoryScore", label: "Info-Theoretic Rigor", weight: "10%", short: "Info" },
 ] as const;
 
 type DimKey = typeof DIMENSIONS[number]["key"];
@@ -197,11 +198,11 @@ export default function Dashboard() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Dimension Breakdown</CardTitle>
-          <CardDescription>Average performance on each of the 6 rubric dimensions</CardDescription>
+          <CardDescription>Average performance on each of the 7 rubric dimensions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {evalsLoading
-            ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)
+            ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)
             : dimAverages.map(d => (
                 <div key={d.key} className="flex items-center gap-3">
                   <div className="w-44 text-sm font-medium shrink-0">{d.label}</div>
