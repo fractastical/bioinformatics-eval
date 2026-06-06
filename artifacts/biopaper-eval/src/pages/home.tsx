@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUp, Link as LinkIcon, Activity, Database, CheckCircle2, FlaskConical, AlertCircle, Clock, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { scoreText, scoreBgClass } from "@/lib/score-color";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -65,7 +66,7 @@ export default function Home() {
 
   const renderMiniScore = (score: number | null | undefined, label: string) => {
     if (score === null || score === undefined) return null;
-    const color = score > 70 ? 'bg-green-500' : score > 40 ? 'bg-amber-500' : 'bg-red-500';
+    const color = scoreBgClass(score);
     return (
       <div className="flex items-center gap-2 text-xs" data-testid={`mini-score-${label}`}>
         <span className="w-16 truncate text-muted-foreground" title={label}>{label}</span>
@@ -201,7 +202,7 @@ export default function Home() {
                         {evaluation.status}
                       </Badge>
                       {evaluation.overallScore !== null && evaluation.overallScore !== undefined && (
-                         <div className={`font-bold text-lg ${evaluation.overallScore > 70 ? 'text-green-600 dark:text-green-400' : evaluation.overallScore > 40 ? 'text-amber-500' : 'text-red-500'}`} data-testid={`eval-score-${evaluation.id}`}>
+                         <div className={`font-bold text-lg ${scoreText(evaluation.overallScore)}`} data-testid={`eval-score-${evaluation.id}`}>
                            {evaluation.overallScore}/100
                          </div>
                       )}

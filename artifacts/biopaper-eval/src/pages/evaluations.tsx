@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, ChevronRight, Filter } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { scoreText } from "@/lib/score-color";
 
 export default function Evaluations() {
   const { data: evaluations, isLoading } = useListEvaluations();
@@ -86,12 +87,8 @@ export default function Evaluations() {
                 </TableRow>
               ) : (
                 filtered?.map(evaluation => {
-                  const getScoreClass = (s: number | null | undefined) => {
-                    if (s == null) return "text-muted-foreground";
-                    if (s > 70) return "text-green-600 dark:text-green-400 font-medium";
-                    if (s > 40) return "text-amber-500 font-medium";
-                    return "text-red-500 font-medium";
-                  };
+                  const getScoreClass = (s: number | null | undefined) =>
+                    `${scoreText(s)} font-medium`;
 
                   return (
                     <TableRow key={evaluation.id} className="group cursor-pointer">

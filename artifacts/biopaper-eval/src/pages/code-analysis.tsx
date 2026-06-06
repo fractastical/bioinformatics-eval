@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChevronLeft, Database, BookOpen, AlertTriangle, FileCode2, LayoutList, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { scoreTextBorder } from "@/lib/score-color";
 
 export interface CodeSegment {
   label: string;
@@ -113,7 +114,7 @@ export default function CodeAnalysisDetail() {
   }, [matrix, segments]);
 
   const score = analysis.overallTraceability || 0;
-  const scoreColor = score > 70 ? 'text-green-500 border-green-500' : score > 40 ? 'text-amber-500 border-amber-500' : 'text-red-500 border-red-500';
+  const scoreColor = scoreTextBorder(score);
 
   return (
     <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-6" data-testid="code-analysis-page">

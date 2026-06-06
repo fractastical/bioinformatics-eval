@@ -12,6 +12,10 @@ An AI-powered tool for evaluating bioinformatics research papers on data transpa
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/scripts run regen-report` — (re)generate `scripts/bee_ant_report.pdf` only, no email
 - `pnpm --filter @workspace/scripts run send-report` — generate the PDF AND email it to jdietz@mit.edu (use with care)
+- `pnpm --filter @workspace/scripts run outreach-digest -- --dry-run` — build the weekly outreach digest and print the HTML (no email)
+- `pnpm --filter @workspace/scripts run outreach-digest` — re-sync every GitHub feedback issue and email the weekly outreach digest to jdietz@mit.edu (intended to run weekly via a Scheduled Deployment)
+- `pnpm --filter @workspace/scripts run zenodo-deposit` — create a Zenodo **draft** deposition of the source code (HEAD git archive) behind the Opus validation gate; never publishes
+- `pnpm --filter @workspace/scripts run zenodo-deposit -- --publish <id>` — **publish** an existing draft (IRREVERSIBLE); requires a strict gate pass + explicit user confirmation
 - Required env: `DATABASE_URL`, `AI_INTEGRATIONS_ANTHROPIC_BASE_URL`, `AI_INTEGRATIONS_ANTHROPIC_API_KEY`
 
 ## Stack
@@ -34,6 +38,8 @@ An AI-powered tool for evaluating bioinformatics research papers on data transpa
 - `lib/db/src/schema/outreach.ts` — outreach + outreach_feedback tables (per-paper outreach tracking)
 - `artifacts/api-server/src/routes/outreach.ts` — outreach CRUD + GitHub sync + manual feedback routes
 - `artifacts/api-server/src/lib/github.ts` — GitHub issue/comment fetch via the Replit `github` connector proxy
+- `scripts/src/outreachDigest.ts` — weekly outreach digest: re-syncs GitHub feedback issues + emails jdietz@mit.edu a status table
+- `scripts/src/zenodoDeposit.ts` — Zenodo source-code deposition (HEAD git archive) gated by an Opus metadata review; draft-only by default, publish behind `--publish <id>`
 - `artifacts/biopaper-eval/src/components/outreach-tab.tsx` — Outreach tab UI on the evaluation detail page
 - `lib/integrations-anthropic-ai/` — Anthropic AI client + batch utilities
 - `artifacts/api-server/src/routes/evaluations.ts` — evaluation + stats routes
@@ -63,7 +69,8 @@ An AI-powered tool for evaluating bioinformatics research papers on data transpa
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Before anything is **published** to an external system (e.g. minting/publishing a Zenodo record), run a validation pass through Claude Opus (`claude-opus-4-8`) first. Never publish without an Opus review gate. The day-to-day evaluation pipeline still runs on `claude-sonnet-4-6`; Opus is the pre-publish validator.
+- Zenodo: create depositions as **drafts** via the API and present them for review; only publish (irreversible) after explicit user confirmation AND a passing Opus validation.
 
 ## Gotchas
 
@@ -77,6 +84,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Outreach sync is idempotent: `outreach_feedback` has a unique index on `(outreach_id, external_id)` and sync uses `onConflictDoNothing` so re-syncs never duplicate GitHub comments. Status is monotonic — sync never downgrades a record already `responded`/`closed`.
 - Mounted sub-routers (`outreach.ts`, `codeAnalyses.ts`) use `Router({ mergeParams: true })`; Express 5 types parent-supplied `req.params` as `{}`, so cast via `(req.params as Record<string, string>).id`
 - The regenerated PDF injects the **published README calibrated scores** (hardcoded per eval id in `regenReport.ts`), NOT the live DB scores — the README diverged from the DB before the +20 calibration, so the DB values are intentionally overridden to keep README/issues/PDF consistent. Narrative text (summary/findings/gaps/recommendations) still comes from the DB.
+- Zenodo deposition (`zenodoDeposit.ts`): sandbox vs production are separate token/host worlds. `ZENODO_SANDBOX=1` targets sandbox.zenodo.org using `ZENODO_TOKEN_SANDBOX`; unset/`0` targets production zenodo.org using `ZENODO_TOKEN_PRODUCTION`. Author is set via `ZENODO_CREATOR_NAME` / `ZENODO_CREATOR_ORCID`. The gate is asymmetric by reversibility: **draft** creation blocks only on Opus high-severity issues (warns on medium/low); **publish** stays strict (Opus `verdict: pass` + zero high). The validator prompt is fed the real current date so it can't false-flag today's `publication_date` as a future date, and it validates the full Opus issue schema (a malformed `severity` is treated as a blocking fail-safe, never silently counted as zero highs). Bucket uploads must use `application/octet-stream` (not `application/zip`, which 415s).
 - The rubric is **versioned**: `RUBRIC_VERSION` in `paperPipeline.ts` (currently `"0.8.0"` — the rubric is intentionally pre-1.0 while it's being validated by reviewers) is the single source of truth and is stamped onto each evaluation (`rubric_version` column) at scoring time. While pre-1.0, bump MINOR (`0.x.0`) for dimension/weight changes and PATCH (`0.8.x`) for guidepost wording/calibration; promote to `1.0.0` once validated. `null` = scored before versioning existed; historic rows are not backfilled (they get stamped only on rerun).
 
 ## Pointers

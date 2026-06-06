@@ -8,6 +8,8 @@
     "send-report": "tsx ./src/sendReport.ts",
     "regen-report": "tsx ./src/regenReport.ts",
     "email-report": "tsx ./src/regenReport.ts --email",
+    "zenodo-deposit": "tsx ./src/zenodoDeposit.ts",
+    "outreach-digest": "tsx ./src/outreachDigest.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
@@ -17,6 +19,9 @@
   },
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.1",
+    "@workspace/db": "workspace:*",
+    "@workspace/integrations-anthropic-ai": "workspace:*",
+    "drizzle-orm": "catalog:",
     "pdfkit": "^0.18.0"
   }
 }

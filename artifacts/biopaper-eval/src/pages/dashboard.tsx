@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { ChevronRight, TrendingUp, Award, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import { scoreText as scoreColor, scoreHex as scoreBg } from "@/lib/score-color";
 
 const DIMENSIONS = [
   { key: "dataSourceScore",        label: "Data Disclosure",     weight: "18%", short: "Data" },
@@ -23,19 +24,6 @@ const DIMENSIONS = [
 ] as const;
 
 type DimKey = typeof DIMENSIONS[number]["key"];
-
-function scoreColor(s: number | null | undefined): string {
-  if (s == null) return "text-muted-foreground";
-  if (s > 70) return "text-green-600 dark:text-green-400";
-  if (s > 40) return "text-amber-500";
-  return "text-red-500";
-}
-
-function scoreBg(s: number): string {
-  if (s > 70) return "#22c55e";
-  if (s > 40) return "#f59e0b";
-  return "#ef4444";
-}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -122,7 +110,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardContent className="p-5">
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400 flex items-center gap-2" data-testid="kpi-top">
+            <div className="text-3xl font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2" data-testid="kpi-top">
               {evalsLoading ? <Skeleton className="h-9 w-12" /> : completed.length ? <><Award className="w-6 h-6" />{topScore}</> : "—"}
             </div>
             <div className="text-sm text-muted-foreground mt-1">Highest Score</div>

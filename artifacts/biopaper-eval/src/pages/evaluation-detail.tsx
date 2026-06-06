@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Activity, RefreshCw, FileCode2, ChevronRight, ExternalLink, Database, SearchX, CheckCircle, ShieldAlert, AlertCircle, Quote, Megaphone } from "lucide-react";
 import { format } from "date-fns";
 import OutreachTab from "@/components/outreach-tab";
+import { scoreText, scoreBgClass, scoreTextBorder } from "@/lib/score-color";
 
 export interface ResolvedAccession {
   identifier: string;
@@ -49,11 +50,7 @@ function DimensionBar({ score, label, weight }: { score: number | null | undefin
     );
   }
 
-  const getColor = (s: number) => {
-    if (s > 70) return "bg-green-500";
-    if (s > 40) return "bg-amber-500";
-    return "bg-red-500";
-  };
+  const getColor = (s: number) => scoreBgClass(s);
 
   return (
     <div className="flex items-center gap-3">
@@ -61,7 +58,7 @@ function DimensionBar({ score, label, weight }: { score: number | null | undefin
       <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
         <div className={`h-full ${getColor(score)}`} style={{ width: `${score}%` }} />
       </div>
-      <div className={`w-10 text-right text-sm font-bold ${score > 70 ? 'text-green-600 dark:text-green-400' : score > 40 ? 'text-amber-500' : 'text-red-500'}`}>
+      <div className={`w-10 text-right text-sm font-bold ${scoreText(score)}`}>
         {score}
       </div>
     </div>
@@ -201,10 +198,7 @@ export default function EvaluationDetail() {
                 <CardTitle className="text-lg">Overall Score</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center justify-center">
-                <div className={`w-32 h-32 rounded-full border-8 flex items-center justify-center mb-4 ${
-                  (evaluation.overallScore || 0) > 70 ? "text-green-500 border-green-500" : 
-                  (evaluation.overallScore || 0) > 40 ? "text-amber-500 border-amber-500" : "text-red-500 border-red-500"
-                }`}>
+                <div className={`w-32 h-32 rounded-full border-8 flex items-center justify-center mb-4 ${scoreTextBorder(evaluation.overallScore || 0)}`}>
                   <span className="text-4xl font-bold" data-testid="overall-score">{evaluation.overallScore || 0}</span>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">Weighted aggregate of all dimensions</p>
@@ -472,10 +466,7 @@ export default function EvaluationDetail() {
                         <CardContent>
                           <div className="flex items-center justify-between mt-2">
                             <div className="text-sm">
-                              Traceability Score: <span className={`font-bold ${
-                                (analysis.overallTraceability || 0) > 70 ? 'text-green-500' : 
-                                (analysis.overallTraceability || 0) > 40 ? 'text-amber-500' : 'text-red-500'
-                              }`}>{analysis.overallTraceability || '-'}</span>
+                              Traceability Score: <span className={`font-bold ${scoreText(analysis.overallTraceability || 0)}`}>{analysis.overallTraceability || '-'}</span>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
                               <Link href={`/evaluations/${evalId}/code/${analysis.id}`}>

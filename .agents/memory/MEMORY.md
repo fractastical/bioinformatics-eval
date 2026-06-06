@@ -6,3 +6,5 @@
 - [Insect Series +20 calibration](insect-series-score-calibration.md) — published scores carry a documented +20 baseline (cap 100); keep README tables, key findings, and GitHub issues all consistent.
 - [Outreach GitHub-sync design](outreach-sync-design.md) — re-syncable external pulls need DB-level dedupe (unique index + onConflictDoNothing) and monotonic status (never regress on sync).
 - [Rubric dimensions](rubric-dimensions.md) — weighted 0-100 dims summing to 1.0; keep content-rigor (info-theory) orthogonal to transparency, non-applicable→~50 not 0; full touchpoint checklist for adding a dim.
+- [Zenodo Opus pre-publish gate](zenodo-opus-gate.md) — gate strictness by reversibility (draft=high-only, publish=strict); inject real "today" into LLM validator; validate full severity schema before trusting the highs count.
+- [Scheduled job self-contained](scheduled-job-self-contained.md) — cron jobs run with no dev workflows; reach data via DB + connectors directly, never the in-repo HTTP API.

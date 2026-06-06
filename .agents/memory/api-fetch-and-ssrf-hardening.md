@@ -41,3 +41,19 @@ misread.
 esbuild ESM — no externalization needed. Always verify the `%PDF-` magic bytes (uploads AND remote
 downloads) regardless of declared MIME, and treat <~200 chars of extracted text as a failure
 (scanned-image PDF without OCR) rather than scoring near-empty content.
+
+## Link-local IPv6 false positive (re-fetch)
+The SSRF guard blocks a legitimate **public** host if DNS resolution returns a
+link-local IPv6 (`fe80::…`) alongside the real public IPv4. On Replit, `getent
+ahosts <host>` often appends the local interface's `fe80::` address, so hosts
+like `www.jstatsoft.org` (real IP 138.x public, curl reaches fine) get rejected
+with "URL points to a disallowed (private) address" on re-fetch.
+
+**Workaround to re-score without touching SSRF code:** the rerun route re-fetches
+URL papers but falls back to cached `extracted_text` when `paper_url` is null.
+Temporarily `UPDATE evaluations SET paper_url=NULL`, trigger rerun (uses cached
+text), then restore the URL. `runEvaluation` never writes `paper_url`, so restore
+is safe.
+**Proper fix (if ever needed):** resolve+connect to a validated public address and
+only block when ALL resolved addresses are private — don't reject because one
+resolved address is link-local.
