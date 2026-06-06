@@ -8,6 +8,7 @@
     "send-report": "tsx ./src/sendReport.ts",
     "regen-report": "tsx ./src/regenReport.ts",
     "email-report": "tsx ./src/regenReport.ts --email",
+    "paper": "tsx ./src/paper.ts",
     "zenodo-deposit": "tsx ./src/zenodoDeposit.ts",
     "outreach-digest": "tsx ./src/outreachDigest.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

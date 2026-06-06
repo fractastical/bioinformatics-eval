@@ -43,6 +43,23 @@ deposition is created/published. Draft creation is reversible; publish is not.
 ## Zenodo API gotchas
 - Bucket file upload Content-Type must be `application/octet-stream` (not
   `application/zip`) or the bucket returns 415.
+- License vocabulary differs by API. The **legacy deposit API** (`/api/deposit/...`,
+  used to create/publish here) normalizes a submitted `"MIT"`/`"mit"` and stores it
+  as its own internal id **`mit-license`** — that is the correct, expected stored
+  value there. The newer **InvenioRDM records vocabulary** (`/api/vocabularies/licenses`)
+  instead uses `mit`; `mit-license` 404s there. **Submit `mit-license` directly**
+  (not the `MIT` alias): when submitted value == stored value, the gate has nothing
+  to flag. Submitting the `MIT` alias works functionally, but the validator reads
+  "submitted MIT, stored mit-license" as a mismatch and — critically — escalates it
+  to **high** under the strict publish context even with a canonical-fact note,
+  which hard-blocks the irreversible publish. The same note that is "medium/awareness"
+  for the draft gate becomes a blocking "high" for publish, because the validator is
+  told the action is permanent. Lesson: don't rely on canonical facts to suppress a
+  recurring nit when you can remove the ambiguity at the source.
+- **`ZENODO_SANDBOX` is set to `1` in this workspace's environment**, so an
+  unqualified run targets sandbox. To publish to production you must explicitly pass
+  `ZENODO_SANDBOX=0` on the command (do NOT just unset it — the env still has `1`).
+- Sandbox DOIs use the `10.5072` test prefix (not `10.5281`); they are throwaway.
 - Sandbox vs production are separate token + host worlds; keep clearly-named tokens
   and a sandbox toggle, and never publish to production without explicit user
   confirmation plus a passing strict gate.

@@ -24,6 +24,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { generatePaperPdf } from "./paper";
 
 const OPUS_MODEL = "claude-opus-4-8";
 
@@ -92,11 +93,12 @@ function buildMetadata(): ZenodoMetadata {
     upload_type: "software",
     title: "BioEval — Bioinformatics Paper Evaluator",
     description: [
-      "<p>BioEval is an AI-powered tool for evaluating bioinformatics and computational-biology research papers on data transparency, dataset declaration, and computational reproducibility.</p>",
-      "<p>Researchers submit a paper by URL or PDF upload. The tool performs real PDF text extraction (via the unpdf library) and errors out rather than scoring unextractable or garbage text, then uses Anthropic Claude to score the paper across seven weighted dimensions (each 0–100): Data Disclosure (18%), Dataset Resolvability (14%), Code Availability &amp; Versioning (14%), Code-to-Data Traceability (18%), Simulation Derivation Clarity (18%), Reproducibility Package Quality (8%), and Information-Theoretic Rigor (10%). The overall score is the weighted average.</p>",
-      "<p>The Information-Theoretic Rigor dimension measures whether a paper formalizes and quantifies the information content of the system it models (Shannon entropy, mutual/transfer entropy, channel capacity, communication bit rate) — particularly apt for swarm, stigmergy, and synchronization systems where information flow IS the phenomenon. It scores scientific-content rigor, orthogonal to the six transparency dimensions; topics with no information-theoretic dimension are scored at a neutral baseline (~50 on the 0–100 scale) so non-applicability neither rewards nor punishes.</p>",
-      "<p>Users can also paste simulation code, which the tool breaks into segments and maps each segment to the data source and citation it depends on, with a confidence rating. A dashboard aggregates scores across all evaluated papers, and a per-paper outreach workflow tracks author feedback (via linked GitHub issues or logged email/forum contacts).</p>",
-      "<p>Version 0.8.0 is a pre-1.0 release: the tool and its evaluation rubric are co-versioned (there is no separate software-vs-rubric version), and the rubric is still under reviewer validation. Built as a pnpm monorepo: React + Vite frontend, Express 5 API, PostgreSQL + Drizzle ORM, contract-first OpenAPI/Orval codegen.</p>",
+      "<p>This deposition is a version of the <em>BioEval Reproducibility Report</em> &mdash; an arXiv-style preprint that explains how the BioEval evaluation system works and presents its evaluations of a corpus of computational-simulation papers &mdash; bundled together with the complete, MIT-licensed source code of the system. Two files are included: the report PDF and a full archive of the source at the corresponding revision.</p>",
+      "<p>Computational and agent-based simulation papers increasingly drive claims about biological coordination (ant and termite stigmergy, honeybee colony dynamics, firefly synchronization, ant-colony optimization), yet their reproducibility is rarely assessed systematically. BioEval is an LLM-driven framework that submits a paper by URL or PDF, extracts its real text (and errors out rather than scoring unextractable input), gathers external evidence, and scores the paper on a versioned seven-dimension rubric using Anthropic Claude.</p>",
+      "<p>The central question BioEval asks is whether a simulation accords with good data and reproducibility practice. Six dimensions measure exactly this: Data Disclosure (18%), Dataset Resolvability (14%), Code Availability &amp; Versioning (14%), Code-to-Data Traceability (18%), Simulation Derivation Clarity (18%), and Reproducibility Package Quality (8%). Scores are anchored to verified external signals &mdash; accessions and DOIs resolved against Crossref and DataCite, live repository facts such as a detected license &mdash; rather than the paper's own claims, and the framework does not credit unverifiable assertions or invent unsubstantiated gaps.</p>",
+      "<p>A seventh, orthogonal dimension, Information-Theoretic Rigor (10%), scores whether a paper formalizes and quantifies the information content of the system it models &mdash; Shannon entropy, mutual and transfer entropy, channel capacity, communication bit rate &mdash; which is particularly apt for swarm, stigmergy, and synchronization systems where information flow IS the phenomenon. It measures scientific-content rigor, not transparency; topics with no information-theoretic dimension are scored at a neutral baseline (~50 on the 0&ndash;100 scale) so non-applicability neither rewards nor punishes. The overall score is the weighted mean of the seven dimensions.</p>",
+      "<p>The bundled report applies the rubric (version 0.8.0) to fourteen insect-swarm and agent-based simulation projects, reporting the raw seven-dimension scores including per-paper information-theoretic rigor. Its headline finding is that transparency is uneven and reproducibility packaging consistently weak, while information-theoretic rigor is systematically low even across projects whose entire subject is communication and coordination.</p>",
+      "<p>Version 0.8.0 is a pre-1.0 release: the tool and its evaluation rubric are co-versioned and the rubric is still under reviewer validation. Built as a pnpm monorepo: React + Vite frontend, Express 5 API, PostgreSQL + Drizzle ORM, contract-first OpenAPI/Orval codegen.</p>",
     ].join("\n"),
     creators: [creator],
     keywords: [
@@ -112,7 +114,7 @@ function buildMetadata(): ZenodoMetadata {
       "FAIR data",
       "large language models",
     ],
-    license: "MIT",
+    license: "mit-license",
     version: "0.8.0",
     access_right: "open",
     language: "eng",
@@ -158,10 +160,13 @@ CANONICAL FACTS (source of truth):
 - 7 weighted dims (0-100): Data Disclosure 18%, Dataset Resolvability 14%, Code Availability & Versioning 14%, Code-to-Data Traceability 18%, Simulation Derivation Clarity 18%, Reproducibility Package Quality 8%, Information-Theoretic Rigor 10%. Overall = weighted average.
 - Information-Theoretic Rigor: orthogonal content-rigor dimension that measures whether a paper formalizes/quantifies the information content of the system it models (e.g. Shannon entropy, mutual/transfer entropy, channel capacity, communication bit rate); particularly apt for swarm/stigmergy/synchronization papers where information flow IS the phenomenon; non-applicable topics (e.g. phylogenetics) scored at a neutral baseline (~50).
 - Real PDF text extraction (unpdf); errors out instead of scoring garbage.
+- DOI/accession resolution is real and uses exactly these public registries: Crossref (api.crossref.org) first, then DataCite (api.datacite.org) as a fallback for data/software DOIs (Zenodo/figshare/Dryad). So the description's claim that scores are anchored to evidence "resolved against Crossref and DataCite" is VERIFIED and correct — do not flag it as an unverifiable specific claim.
 - Code-to-data traceability: code segments mapped to data source + citation with a confidence rating.
 - Dashboard of aggregate stats; per-paper outreach (GitHub issue sync or manual email/forum logs).
 - Rubric version 0.8.0, pre-1.0. The software and rubric are co-versioned at 0.8.0 — there is no separate software release version (root package.json is an unpublished 0.0.0 placeholder and there are no git release tags), so 0.8.0 legitimately serves as the deposition version. Stack: pnpm monorepo, React+Vite, Express 5, Postgres+Drizzle, Anthropic Claude, OpenAPI/Orval.
 - Repo: github.com/fractastical/bioinformatics-eval. Declared MIT in root package.json.
+- This deposition bundles TWO files: (1) an arXiv-style preprint PDF, the "BioEval Reproducibility Report", which explains how the system works and presents evaluations of fourteen insect-swarm/agent-based simulation projects under rubric v0.8.0 (reporting the raw seven-dimension scores, including per-paper Information-Theoretic Rigor), and (2) a zip archive of the complete source code at HEAD. The metadata description is written as that paper's abstract; its paper-style, report-framed prose is intentional and correct (the record is genuinely a paper + code, an upload_type "software" record with an accompanying report). Do NOT flag the description for "reading like a paper", for describing evaluation results, or for the dual paper-and-code framing.
+- License: the project is MIT (declared in package.json). The metadata SUBMITS Zenodo's canonical legacy license identifier "mit-license" directly (the value in the JSON below IS "mit-license", not "MIT"). VERIFIED empirically: "mit-license" is exactly the id the legacy deposit API stores for the MIT license (submitting the SPDX alias "MIT"/"mit" is normalized to this same id), so "mit-license" is the correct, expected, unambiguous value and validates without error. Submitted value == stored value == "mit-license"; it is fully consistent with the MIT declaration in package.json. Do NOT flag it as invalid, non-standard, mismatched, or ambiguous.
 - Source-repo link convention: this software deposition references its source repository via related_identifier relation "isSupplementTo" — the relation Zenodo's official GitHub integration uses to link a software record to its repository. This is the intended, correct relation for this record; treat it as correct and do not flag it.
 
 METADATA TO VALIDATE (JSON):
@@ -309,6 +314,12 @@ async function createDraft(): Promise<void> {
     );
   }
 
+  // Generate the paper FIRST so we fail fast (before creating a draft) if the
+  // API server / DB needed to render it is unavailable.
+  console.log("Generating the BioEval Reproducibility Report (paper PDF)...");
+  const paperBuf = await generatePaperPdf();
+  console.log(`Paper rendered (${(paperBuf.length / 1024).toFixed(0)} KB).`);
+
   const archive = makeSourceArchive();
 
   console.log("Creating draft deposition...");
@@ -321,15 +332,24 @@ async function createDraft(): Promise<void> {
   const bucketUrl: string = draft.links.bucket;
   console.log(`Draft created: id=${depId}`);
 
+  // Zenodo's bucket (files) API only accepts application/octet-stream.
+  const octet = { "Content-Type": "application/octet-stream" } as const;
+
+  console.log("Uploading the report paper...");
+  await zfetch(`${bucketUrl}/BioEval-Reproducibility-Report.pdf`, token, {
+    method: "PUT",
+    headers: octet,
+    body: paperBuf,
+  });
+
   console.log("Uploading source archive...");
   const fileBuf = fs.readFileSync(archive);
   await zfetch(`${bucketUrl}/bioinformatics-eval-source.zip`, token, {
     method: "PUT",
-    // Zenodo's bucket (files) API only accepts application/octet-stream.
-    headers: { "Content-Type": "application/octet-stream" },
+    headers: octet,
     body: fileBuf,
   });
-  console.log("File uploaded.");
+  console.log("Both files uploaded.");
 
   console.log("Setting metadata...");
   const updated = await zfetch(

@@ -12,3 +12,9 @@ id = "l9qJb9EfCdoI7neqEX4Js"
 uri = "file://scripts/bee_ant_report.pdf"
 type = "pdf"
 title = "BioEval — Insect Simulation Series Report"
+
+[[outputs]]
+id = "Da3RrF4yYAWC0hUeJABYR"
+uri = "file://scripts/bioeval_paper.pdf"
+type = "pdf"
+title = "BioEval Reproducibility Report (arXiv-style preprint)"
