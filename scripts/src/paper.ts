@@ -164,43 +164,43 @@ function body(doc: PDFKit.PDFDocument, text: string): void {
 const DIMENSIONS: Array<{ name: string; weight: string; tests: string }> = [
   {
     name: "Data Disclosure",
-    weight: "18%",
+    weight: "15%",
     tests:
       "Whether the paper names the data it uses and declares its provenance, access conditions, and licensing — not merely asserting that data exists.",
   },
   {
     name: "Dataset Resolvability",
-    weight: "14%",
+    weight: "12%",
     tests:
       "Whether declared datasets carry resolvable identifiers (accessions, DOIs, repository URLs) that actually resolve to the stated record.",
   },
   {
     name: "Code Availability & Versioning",
-    weight: "14%",
+    weight: "12%",
     tests:
       "Whether the simulation code is publicly archived, versioned, and reachable at a stable location, with an explicit license.",
   },
   {
     name: "Code-to-Data Traceability",
-    weight: "18%",
+    weight: "15%",
     tests:
       "Whether each computational step can be traced back to the specific data source and citation it depends on.",
   },
   {
     name: "Simulation Derivation Clarity",
-    weight: "18%",
+    weight: "14%",
     tests:
       "Whether model parameters, assumptions, and update rules are derived transparently rather than asserted, so the simulation can be re-derived.",
   },
   {
     name: "Reproducibility Package Quality",
-    weight: "8%",
+    weight: "7%",
     tests:
       "Whether a runnable package (environment spec, seeds, instructions) lets an independent reader reproduce the reported results.",
   },
   {
     name: "Information-Theoretic Rigor",
-    weight: "10%",
+    weight: "25%",
     tests:
       "Whether the paper formalizes and quantifies the information content of the system it models. Orthogonal to transparency; non-applicable topics are scored at a neutral baseline (~50).",
   },
