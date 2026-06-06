@@ -2,6 +2,10 @@
 
 An AI-powered tool that scores computational and simulation research papers on data transparency, reproducibility, and code availability. Researchers paste a URL or upload a PDF; Claude analyses the paper across six dimensions and returns a structured report with findings, gaps, and recommendations.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20567720.svg)](https://doi.org/10.5281/zenodo.20567720)
+
+> 📄 **Published paper:** *BioEval Reproducibility Report* — the system and full evaluation corpus (raw rubric v0.8.0 scores, including the information-theoretic dimension), archived with the source code on Zenodo: **[doi.org/10.5281/zenodo.20567720](https://doi.org/10.5281/zenodo.20567720)**.
+
 ![BioEval Scores Dashboard](docs/dashboard.jpg)
 
 ---
