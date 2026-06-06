@@ -14,13 +14,13 @@ import { format } from "date-fns";
 import { scoreText as scoreColor, scoreHex as scoreBg } from "@/lib/score-color";
 
 const DIMENSIONS = [
-  { key: "dataSourceScore",        label: "Data Disclosure",     weight: "18%", short: "Data" },
-  { key: "datasetScore",           label: "Dataset Resolvability", weight: "14%", short: "Dataset" },
-  { key: "reproducibilityScore",   label: "Code Availability",   weight: "14%", short: "Code" },
-  { key: "citationScore",          label: "Traceability",        weight: "18%", short: "Trace" },
-  { key: "simulationClarityScore", label: "Sim. Clarity",        weight: "18%", short: "Sim" },
-  { key: "reproPackageScore",      label: "Repro Package",       weight: "8%", short: "Repro" },
-  { key: "informationTheoryScore", label: "Info-Theoretic Rigor", weight: "10%", short: "Info" },
+  { key: "dataSourceScore",        label: "Data Disclosure",     weight: "15%", short: "Data" },
+  { key: "datasetScore",           label: "Dataset Resolvability", weight: "12%", short: "Dataset" },
+  { key: "reproducibilityScore",   label: "Code Availability",   weight: "12%", short: "Code" },
+  { key: "citationScore",          label: "Traceability",        weight: "15%", short: "Trace" },
+  { key: "simulationClarityScore", label: "Sim. Clarity",        weight: "14%", short: "Sim" },
+  { key: "reproPackageScore",      label: "Repro Package",       weight: "7%", short: "Repro" },
+  { key: "informationTheoryScore", label: "Info-Theoretic Rigor", weight: "25%", short: "Info" },
 ] as const;
 
 type DimKey = typeof DIMENSIONS[number]["key"];

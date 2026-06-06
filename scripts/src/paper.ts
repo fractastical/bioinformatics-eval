@@ -29,9 +29,12 @@ export const PAPER_EVAL_IDS = [
   12, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 ];
 
-// Rubric v0.8.0 dimension weights (sum = 1.0). Single source of truth for the
-// recomputed overall in this paper; mirrors RUBRIC_VERSION weights in
-// artifacts/api-server/src/lib/paperPipeline.ts.
+// Rubric v0.8.0 dimension weights (sum = 1.0). PINNED to the published v0.8.0
+// Zenodo deposition (DOI 10.5281/zenodo.20567720), which is immutable — this
+// builder reconstructs that snapshot from v0.8.0-stamped evals (enforced by
+// REQUIRED_RUBRIC_VERSION below). It intentionally does NOT track the live
+// RUBRIC_VERSION in paperPipeline.ts (now 0.9.0, IT reweighted to 25%); a future
+// paper at a newer rubric needs its own re-scored corpus + updated constants.
 const WEIGHTS = {
   dataSourceScore: 0.18, // Data Disclosure
   datasetScore: 0.14, // Dataset Resolvability

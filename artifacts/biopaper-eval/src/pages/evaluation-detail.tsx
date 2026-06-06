@@ -210,18 +210,18 @@ export default function EvaluationDetail() {
                 <CardTitle className="text-lg">Evaluation Dimensions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <DimensionBar score={evaluation.dataSourceScore} label="Data Disclosure" weight="18%" />
+                <DimensionBar score={evaluation.dataSourceScore} label="Data Disclosure" weight="15%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.datasetScore} label="Dataset Resolvability" weight="14%" />
-                <DimensionBar score={evaluation.reproducibilityScore} label="Code Availability" weight="14%" />
+                <DimensionBar score={evaluation.datasetScore} label="Dataset Resolvability" weight="12%" />
+                <DimensionBar score={evaluation.reproducibilityScore} label="Code Availability" weight="12%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.citationScore} label="Traceability" weight="18%" />
+                <DimensionBar score={evaluation.citationScore} label="Traceability" weight="15%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.simulationClarityScore} label="Simulation Clarity" weight="18%" />
+                <DimensionBar score={evaluation.simulationClarityScore} label="Simulation Clarity" weight="14%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.reproPackageScore} label="Repro Package Quality" weight="8%" />
+                <DimensionBar score={evaluation.reproPackageScore} label="Repro Package Quality" weight="7%" />
                 {/* @ts-ignore */}
-                <DimensionBar score={evaluation.informationTheoryScore} label="Information-Theoretic Rigor" weight="10%" />
+                <DimensionBar score={evaluation.informationTheoryScore} label="Information-Theoretic Rigor" weight="25%" />
               </CardContent>
             </Card>
           </div>
