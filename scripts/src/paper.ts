@@ -4,7 +4,7 @@
  * Unlike sendReport.ts (a colorful dashboard digest emailed weekly), this
  * produces a sober, single-column academic paper that (a) explains how the
  * whole BioEval system works and (b) presents the evaluations of the
- * computational-simulation corpus. It reports the RAW rubric v0.8.0 scores
+ * computational-simulation corpus. It reports the RAW rubric v0.9.0 scores
  * straight from the database (all seven dimensions, including per-paper
  * Information-Theoretic Rigor) rather than the +20 calibrated README values.
  *
@@ -29,20 +29,22 @@ export const PAPER_EVAL_IDS = [
   12, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 ];
 
-// Rubric v0.8.0 dimension weights (sum = 1.0). PINNED to the published v0.8.0
-// Zenodo deposition (DOI 10.5281/zenodo.20567720), which is immutable — this
-// builder reconstructs that snapshot from v0.8.0-stamped evals (enforced by
-// REQUIRED_RUBRIC_VERSION below). It intentionally does NOT track the live
-// RUBRIC_VERSION in paperPipeline.ts (now 0.9.0, IT reweighted to 25%); a future
-// paper at a newer rubric needs its own re-scored corpus + updated constants.
+// Rubric v0.9.0 dimension weights (sum = 1.0). These track the live
+// RUBRIC_VERSION in paperPipeline.ts (v0.9.0, which elevated Information-Theoretic
+// Rigor to 25% as a first-class axis) and the corpus must be re-scored under
+// v0.9.0 (enforced by REQUIRED_RUBRIC_VERSION below) before this builds.
+// The earlier published v0.8.0 deposition (DOI 10.5281/zenodo.20567720) is
+// immutable and stays as-is on Zenodo; its builder (WEIGHTS 18/14/14/18/18/8/10,
+// REQUIRED_RUBRIC_VERSION "0.8.0") is recoverable from git history at the v0.8.0
+// commit if it ever needs to be reproduced.
 const WEIGHTS = {
-  dataSourceScore: 0.18, // Data Disclosure
-  datasetScore: 0.14, // Dataset Resolvability
-  reproducibilityScore: 0.14, // Code Availability & Versioning
-  citationScore: 0.18, // Code-to-Data Traceability
-  simulationClarityScore: 0.18, // Simulation Derivation Clarity
-  reproPackageScore: 0.08, // Reproducibility Package Quality
-  informationTheoryScore: 0.1, // Information-Theoretic Rigor (orthogonal)
+  dataSourceScore: 0.15, // Data Disclosure
+  datasetScore: 0.12, // Dataset Resolvability
+  reproducibilityScore: 0.12, // Code Availability & Versioning
+  citationScore: 0.15, // Code-to-Data Traceability
+  simulationClarityScore: 0.14, // Simulation Derivation Clarity
+  reproPackageScore: 0.07, // Reproducibility Package Quality
+  informationTheoryScore: 0.25, // Information-Theoretic Rigor (orthogonal)
 } as const;
 
 export interface PaperEval {
@@ -78,10 +80,10 @@ export async function fetchPaperEval(id: number): Promise<PaperEval> {
 
 // The seven scored dimensions (keys of WEIGHTS). Every one must be present and
 // numeric for an eval to appear in the paper — the report claims to present the
-// RAW seven-dimension v0.8.0 scores, so a missing dimension is a hard error, not
+// RAW seven-dimension v0.9.0 scores, so a missing dimension is a hard error, not
 // a silent zero.
 const DIMENSION_KEYS = Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[];
-const REQUIRED_RUBRIC_VERSION = "0.8.0";
+const REQUIRED_RUBRIC_VERSION = "0.9.0";
 
 /** Read a dimension that MUST be a finite number; throw otherwise. */
 function dim(ev: PaperEval, k: keyof typeof WEIGHTS): number {
@@ -228,7 +230,7 @@ function drawTitleBlock(doc: PDFKit.PDFDocument, dateStr: string): void {
     .font(SANS)
     .fontSize(8.5)
     .fillColor(MUTED)
-    .text("BIOEVAL REPRODUCIBILITY REPORT · PREPRINT · v0.8.0", MARGIN, MARGIN, {
+    .text("BIOEVAL REPRODUCIBILITY REPORT · PREPRINT · v0.9.0", MARGIN, MARGIN, {
       width: cw,
       align: "center",
       characterSpacing: 1.2,
@@ -297,7 +299,7 @@ function drawAbstract(doc: PDFKit.PDFDocument, n: number): void {
     "information content of the system it models (Shannon entropy, mutual and transfer " +
     "entropy, channel capacity, communication bit rate). Scores are grounded in verified " +
     "external evidence — resolved accessions and DOIs, live repository facts — rather than " +
-    "the paper's own claims. We apply BioEval (rubric v0.8.0) to a corpus of " +
+    "the paper's own claims. We apply BioEval (rubric v0.9.0) to a corpus of " +
     `${n} insect-swarm and agent-based simulation projects. Transparency is uneven and ` +
     "reproducibility packaging is consistently weak; most strikingly, information-theoretic " +
     "rigor is systematically low even though communication and coordination are the modeled " +
@@ -444,7 +446,7 @@ function drawResultsTable(doc: PDFKit.PDFDocument, evals: PaperEval[]): void {
     .fontSize(8)
     .fillColor(MUTED)
     .text(
-      "DD Data Disclosure · DR Dataset Resolvability · CA Code Availability · TR Code-to-Data Traceability · SC Simulation Clarity · RP Reproducibility Package · IT Information-Theoretic Rigor. Overall is the weighted mean of all seven dimensions. Scores are rubric v0.8.0 (0–100).",
+      "DD Data Disclosure · DR Dataset Resolvability · CA Code Availability · TR Code-to-Data Traceability · SC Simulation Clarity · RP Reproducibility Package · IT Information-Theoretic Rigor. Overall is the weighted mean of all seven dimensions. Scores are rubric v0.9.0 (0–100).",
       MARGIN,
       doc.y,
       { width: cw, align: "justify", lineGap: 1.2 },
@@ -530,7 +532,7 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
     subHeading(doc, "2.2  The seven dimensions");
     body(
       doc,
-      "The rubric is versioned (currently v0.8.0, intentionally pre-1.0 while it is validated by reviewers) " +
+      "The rubric is versioned (currently v0.9.0, intentionally pre-1.0 while it is validated by reviewers) " +
         "and stamped onto every evaluation so scores remain interpretable as the rubric evolves. Each " +
         "dimension is scored 0–100 against fixed guideposts; the overall score is the weighted mean of all " +
         "seven, using the weights below.",
@@ -588,7 +590,7 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
       doc,
       `We evaluated ${ranked.length} computational-simulation projects spanning ant, bee, termite, and firefly ` +
         "systems and ant-colony optimization, drawn from the insect-swarm simulation series. Every project was " +
-        "scored under a single rubric version (v0.8.0) so the results are mutually comparable. Scores are " +
+        "scored under a single rubric version (v0.9.0) so the results are mutually comparable. Scores are " +
         "assigned by the language model against the fixed guideposts of Section 2, grounded in the external " +
         "evidence gathered during analysis. In the table below the overall column is recomputed as the exact " +
         "weighted mean of the seven dimensions, so each row is reproducible from the published weights.",
@@ -682,7 +684,7 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
         "together with a complete archive of the source code at the corresponding revision. The system is built " +
         "as a pnpm monorepo (React + Vite frontend, Express 5 API, PostgreSQL with Drizzle ORM, contract-first " +
         "OpenAPI/Orval codegen) and uses Anthropic Claude through Replit's AI integrations. The evaluation rubric " +
-        "and the software are co-versioned at v0.8.0.",
+        "and the software are co-versioned at v0.9.0.",
     );
 
     sectionHeading(doc, "", "References");
@@ -718,7 +720,7 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
         .fontSize(7.5)
         .fillColor(MUTED)
         .text(
-          `BioEval Reproducibility Report (preprint) · rubric v0.8.0 · page ${i + 1} of ${range.count}`,
+          `BioEval Reproducibility Report (preprint) · rubric v0.9.0 · page ${i + 1} of ${range.count}`,
           MARGIN,
           doc.page.height - 40,
           { width: contentWidth(doc), align: "center", lineBreak: false },
