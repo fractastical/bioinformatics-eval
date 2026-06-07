@@ -471,6 +471,58 @@ function firstBullet(text: string | null): string {
   return line ? line.replace(/\s+/g, " ").trim() : "";
 }
 
+/** Split a newline/bullet-delimited field into cleaned individual bullet lines. */
+function allBullets(text: string | null): string[] {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((l) => l.replace(/^[-•*]\s*/, "").replace(/\s+/g, " ").trim())
+    .filter((l) => l.length > 0);
+}
+
+/** A small bold label introducing a block within a per-project evaluation. */
+function evalLabel(doc: PDFKit.PDFDocument, label: string): void {
+  ensureSpace(doc, 52);
+  doc.moveDown(0.18);
+  doc.font(SERIF_B).fontSize(9.5).fillColor(HEAD).text(label, MARGIN, doc.y);
+  doc.moveDown(0.08);
+}
+
+/** Render a page-break-safe bulleted list. */
+function renderBullets(doc: PDFKit.PDFDocument, items: string[]): void {
+  for (const item of items) {
+    ensureSpace(doc, 26);
+    const startY = doc.y;
+    doc
+      .font(SERIF)
+      .fontSize(9)
+      .fillColor(MUTED)
+      .text("•", MARGIN, startY, { lineBreak: false });
+    doc
+      .font(SERIF)
+      .fontSize(9)
+      .fillColor(INK)
+      .text(item, MARGIN + 14, startY, {
+        width: contentWidth(doc) - 14,
+        align: "justify",
+        lineGap: 1.3,
+      });
+    doc.moveDown(0.12);
+  }
+}
+
+/** One-line compact per-dimension score readout for a project. */
+function scoreReadout(ev: PaperEval): string {
+  const r = (k: keyof typeof WEIGHTS) => Math.round(dim(ev, k));
+  return (
+    `Overall ${weightedOverall(ev).toFixed(1)}  ·  ` +
+    `DD ${r("dataSourceScore")}  DR ${r("datasetScore")}  ` +
+    `CA ${r("reproducibilityScore")}  TR ${r("citationScore")}  ` +
+    `SC ${r("simulationClarityScore")}  RP ${r("reproPackageScore")}  ` +
+    `IT ${r("informationTheoryScore")}  ·  rubric v${REQUIRED_RUBRIC_VERSION}`
+  );
+}
+
 export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
   const ranked = [...evals].sort(
     (a, b) => weightedOverall(b) - weightedOverall(a),
@@ -652,6 +704,17 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
       }
       doc.moveDown(0.45);
     }
+    doc.moveDown(0.1);
+    doc
+      .font(SERIF_I)
+      .fontSize(9.2)
+      .fillColor(MUTED)
+      .text(
+        "The complete evaluation for every project — full summary, findings, gaps, and recommendations — is reproduced in Appendix A.",
+        MARGIN,
+        doc.y,
+        { width: contentWidth(doc), align: "justify", lineGap: 1.4 },
+      );
 
     sectionHeading(doc, "6", "Discussion");
     body(
@@ -702,6 +765,66 @@ export async function buildPaper(evals: PaperEval[]): Promise<Buffer> {
           indent: 0,
         });
       doc.moveDown(0.2);
+    });
+
+    // ---- Appendix A: the full, long-form evaluation for every project --------
+    doc.addPage();
+    sectionHeading(doc, "A", "Full Per-Project Evaluations");
+    body(
+      doc,
+      "This appendix reproduces the complete evaluation BioEval produced for each project, in the same " +
+        "descending-overall order as Section 5. For every project it lists the per-dimension scores and the full " +
+        "narrative — summary, findings, gaps, and recommendations — exactly as generated under rubric v" +
+        REQUIRED_RUBRIC_VERSION +
+        ", so the synopses in Section 5.3 can be read against their complete supporting detail.",
+    );
+    ranked.forEach((ev, idx) => {
+      ensureSpace(doc, 64);
+      doc.moveDown(0.5);
+      doc
+        .font(SERIF_B)
+        .fontSize(11)
+        .fillColor(HEAD)
+        .text(`A.${idx + 1}  ${ev.title}`, MARGIN, doc.y, {
+          width: contentWidth(doc),
+        });
+      doc.moveDown(0.12);
+      doc
+        .font(SANS)
+        .fontSize(8.5)
+        .fillColor(MUTED)
+        .text(scoreReadout(ev), MARGIN, doc.y, { width: contentWidth(doc) });
+      doc.moveDown(0.1);
+
+      if (ev.summary && ev.summary.trim().length > 0) {
+        evalLabel(doc, "Summary");
+        doc
+          .font(SERIF)
+          .fontSize(9.2)
+          .fillColor(INK)
+          .text(ev.summary.replace(/\s+/g, " ").trim(), MARGIN, doc.y, {
+            width: contentWidth(doc),
+            align: "justify",
+            lineGap: 1.4,
+          });
+      }
+
+      const findings = allBullets(ev.findings);
+      if (findings.length > 0) {
+        evalLabel(doc, "Findings");
+        renderBullets(doc, findings);
+      }
+      const gaps = allBullets(ev.gaps);
+      if (gaps.length > 0) {
+        evalLabel(doc, "Gaps");
+        renderBullets(doc, gaps);
+      }
+      const recommendations = allBullets(ev.recommendations);
+      if (recommendations.length > 0) {
+        evalLabel(doc, "Recommendations");
+        renderBullets(doc, recommendations);
+      }
+      doc.moveDown(0.3);
     });
 
     // Footer with page numbers. Write inside the bottom margin band with
